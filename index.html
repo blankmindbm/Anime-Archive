@@ -56,7 +56,8 @@
     border-bottom: 1px solid #17171b;
   }
   .topbar-in { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
-  .logo { font-size: 21px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+  .logo { font-size: 21px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; cursor: pointer; }
+  .logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
   .logo b { color: var(--accent); font-weight: 800; }
   .topbar .spacer { flex: 1; }
   .top-count { color: var(--muted); font-size: 13px; white-space: nowrap; }
@@ -972,7 +973,7 @@
 
 <header class="topbar">
   <div class="wrap topbar-in">
-    <div class="logo">Anime <b>Archive</b></div>
+    <div class="logo" id="logoHomeBtn" role="button" tabindex="0" aria-label="Go home" title="Go home">Anime <b>Archive</b></div>
     <div class="spacer"></div>
     <span class="top-count" id="topCount">9,433 titles &middot; 6 sources</span>
     <button type="button" class="icon-btn" id="topSearchBtn" aria-label="Search titles">
@@ -4228,6 +4229,17 @@
     $("tabHome").addEventListener("click", function () {
       goHome();
       window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    $("logoHomeBtn").addEventListener("click", function () {
+      goHome();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    $("logoHomeBtn").addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        goHome();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     });
     $("tabWatchlist").addEventListener("click", function () {
       showBookmarksPage();
