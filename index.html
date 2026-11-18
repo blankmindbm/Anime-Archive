@@ -70,14 +70,7 @@
   .icon-btn:hover { border-color: var(--accent); }
   .icon-btn.signed-in { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
-  /* ---------- account panel ---------- */
-  .account-panel {
-    position: fixed; top: 66px; right: 18px; z-index: 60;
-    width: min(340px, calc(100vw - 36px));
-    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-    padding: 16px 18px 14px; box-shadow: 0 12px 32px rgba(0,0,0,.55);
-  }
-  .account-panel h2 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+  /* ---------- account settings ---------- */
   .acct-sub { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
   .acct-label { display: block; margin: 10px 0 4px; color: var(--muted); font-size: 12.5px; font-weight: 700; }
   .acct-input {
@@ -97,6 +90,21 @@
   .acct-btn.google { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
   .acct-email { margin: 0 0 4px; font-weight: 700; word-break: break-all; }
   .acct-note { margin: 10px 0 0; color: var(--muted); font-size: 12.5px; min-height: 1em; }
+
+  /* ---------- account settings page ---------- */
+  .acct-page-title { margin: 18px 0 14px; font-size: 22px; font-weight: 800; }
+  .acct-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px 18px 14px; margin: 0 0 16px;
+  }
+  .acct-card h3 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+  .acct-username { margin: 0 0 4px; font-weight: 700; word-break: break-all; }
+  .acct-toggle {
+    display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0;
+    color: var(--text); font-size: 13.5px; line-height: 1.4; cursor: pointer;
+  }
+  .acct-toggle input { margin-top: 2px; accent-color: var(--accent); flex: 0 0 auto; }
+  .acct-toggle small { display: block; color: var(--muted); font-size: 12.5px; }
 
   main { padding-bottom: 8px; }
 
@@ -985,32 +993,6 @@
   </div>
 </header>
 
-<div class="account-panel hidden" id="accountPanel" role="dialog" aria-label="Account">
-  <div id="accountSignedOut">
-    <h2>Account</h2>
-    <p class="acct-sub">Sign in to sync Continue Watching and bookmarks across devices.</p>
-    <form id="accountForm">
-      <label class="acct-label" for="accountEmail">Email</label>
-      <input class="acct-input" type="email" id="accountEmail" autocomplete="email" required>
-      <label class="acct-label" for="accountPassword">Password</label>
-      <input class="acct-input" type="password" id="accountPassword" autocomplete="current-password" required>
-      <div class="acct-row">
-        <button type="submit" class="acct-btn" id="accountSignInBtn">Sign in</button>
-        <button type="button" class="acct-btn ghost" id="accountCreateBtn">Create account</button>
-      </div>
-      <button type="button" class="acct-btn google" id="accountGoogleBtn">Continue with Google</button>
-    </form>
-    <p class="acct-note" id="accountNote"></p>
-  </div>
-  <div id="accountSignedIn" class="hidden">
-    <h2>Signed in</h2>
-    <p class="acct-email" id="accountEmailLabel"></p>
-    <p class="acct-sub">Continue Watching and bookmarks sync to this account.</p>
-    <button type="button" class="acct-btn" id="accountSignOutBtn">Sign out</button>
-    <p class="acct-note" id="accountSyncNote"></p>
-  </div>
-</div>
-
 <div class="wrap">
   <main>
     <section id="browseView" aria-label="Browse anime">
@@ -1138,6 +1120,54 @@
       </div>
       <div id="schedBody">
         <p class="loading">Loading schedule...</p>
+      </div>
+    </section>
+
+    <section id="accountView" class="hidden" aria-label="Account settings">
+      <h2 class="acct-page-title">Account</h2>
+      <div class="acct-card">
+        <h3>Google</h3>
+        <div id="accountSignedOut">
+          <p class="acct-sub">Sign in to sync Continue Watching and bookmarks across devices.</p>
+          <form id="accountForm">
+            <label class="acct-label" for="accountEmail">Email</label>
+            <input class="acct-input" type="email" id="accountEmail" autocomplete="email" required>
+            <label class="acct-label" for="accountPassword">Password</label>
+            <input class="acct-input" type="password" id="accountPassword" autocomplete="current-password" required>
+            <div class="acct-row">
+              <button type="submit" class="acct-btn" id="accountSignInBtn">Sign in</button>
+              <button type="button" class="acct-btn ghost" id="accountCreateBtn">Create account</button>
+            </div>
+            <button type="button" class="acct-btn google" id="accountGoogleBtn">Continue with Google</button>
+          </form>
+          <p class="acct-note" id="accountNote"></p>
+        </div>
+        <div id="accountSignedIn" class="hidden">
+          <h2>Signed in</h2>
+          <p class="acct-email" id="accountEmailLabel"></p>
+          <p class="acct-sub">Continue Watching and bookmarks sync to this account.</p>
+          <button type="button" class="acct-btn" id="accountSignOutBtn">Sign out</button>
+          <p class="acct-note" id="accountSyncNote"></p>
+        </div>
+      </div>
+      <div class="acct-card">
+        <h3>MyAnimeList</h3>
+        <div id="malSignedOut">
+          <p class="acct-sub">Connect a MyAnimeList account to keep episode progress in sync. Episodes watched here are marked watched on MyAnimeList.</p>
+          <button type="button" class="acct-btn" id="malConnectBtn">Connect MyAnimeList</button>
+          <p class="acct-note" id="malNote"></p>
+        </div>
+        <div id="malSignedIn" class="hidden">
+          <p class="acct-username" id="malUsernameLabel"></p>
+          <p class="acct-sub">Episodes watched here sync to this MyAnimeList account.</p>
+          <div class="acct-row">
+            <button type="button" class="acct-btn ghost" id="malSyncNowBtn">Sync from MAL now</button>
+            <button type="button" class="acct-btn ghost" id="malDisconnectBtn">Disconnect</button>
+          </div>
+          <p class="acct-note" id="malSyncNote"></p>
+        </div>
+        <label class="acct-toggle"><input type="checkbox" id="malAutoPushToggle" checked> <span>Mark episodes on MyAnimeList automatically<small>When an episode is opened here, update its watched count on MyAnimeList.</small></span></label>
+        <label class="acct-toggle"><input type="checkbox" id="malImportToggle" checked> <span>Import MyAnimeList progress on connect<small>When connecting, mark episodes already watched on MyAnimeList as watched here.</small></span></label>
       </div>
     </section>
 
@@ -2095,31 +2125,11 @@
     });
   }
 
-  function toggleAccountPanel(force) {
-    var panel = $("accountPanel");
-    if (!panel) { return; }
-    var open = typeof force === "boolean" ? force : panel.classList.contains("hidden");
-    panel.classList.toggle("hidden", !open);
-  }
-
   function wireAccountPanel() {
     var btn = $("topAccountBtn");
     if (btn) {
-      btn.addEventListener("click", function (ev) {
-        ev.stopPropagation();
-        toggleAccountPanel();
-      });
-    }
-    var panel = $("accountPanel");
-    if (panel) {
-      document.addEventListener("click", function (ev) {
-        if (panel.classList.contains("hidden")) { return; }
-        if (panel.contains(ev.target)) { return; }
-        if (btn && btn.contains(ev.target)) { return; }
-        toggleAccountPanel(false);
-      });
-      document.addEventListener("keydown", function (ev) {
-        if (ev.key === "Escape") { toggleAccountPanel(false); }
+      btn.addEventListener("click", function () {
+        showAccountPage();
       });
     }
     var form = $("accountForm");
@@ -2133,7 +2143,6 @@
         setAccountNote("Signing in...");
         fbAuth.signInWithEmailAndPassword(email, pw).then(function () {
           setAccountNote("");
-          toggleAccountPanel(false);
         }).catch(function (err) { setAccountNote(friendlyAuthError(err)); });
       });
     }
@@ -2147,7 +2156,6 @@
         setAccountNote("Creating your account...");
         fbAuth.createUserWithEmailAndPassword(email, pw).then(function () {
           setAccountNote("");
-          toggleAccountPanel(false);
         }).catch(function (err) { setAccountNote(friendlyAuthError(err)); });
       });
     }
@@ -2158,7 +2166,6 @@
         setAccountNote("Opening Google sign-in...");
         fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function () {
           setAccountNote("");
-          toggleAccountPanel(false);
         }).catch(function (err) { setAccountNote(friendlyAuthError(err)); });
       });
     }
@@ -2171,6 +2178,381 @@
         });
       });
     }
+  }
+
+  /* ----- MyAnimeList sync (optional) -----
+     Connect a MyAnimeList account from the Account page and the
+     page keeps episode progress in sync with it. The OAuth flow
+     is authorization code with PKCE (plain method only, so the
+     challenge is the verifier itself); the app is a public client
+     with no secret, so the token exchange happens in the browser.
+     Tokens live in local storage on this device only and are never
+     written to the cloud. Watching an episode here marks it
+     watched locally as before, and when auto-push is on it also
+     updates the watched count on MyAnimeList (never lowering the
+     remote count, and refusing when the episode number is past
+     the total MyAnimeList reports). Import merges the MyAnimeList
+     list into the local watched map. Every MAL failure stays
+     quiet: playback and the local mark never depend on it. */
+  var MAL_CLIENT_ID = "ce55084ffc31e453f41f17a598061f20";
+  var MAL_REDIRECT_URI = "https://blankmindbm.github.io/Anime-Archive/";
+  var MAL_AUTH_URL = "https://myanimelist.net/v1/oauth2/authorize";
+  var MAL_TOKEN_URL = "https://myanimelist.net/v1/oauth2/token";
+  var MAL_API = "https://api.myanimelist.net/v2";
+  var MAL_STORE_KEY = "anime-archive:mal:v1";
+  var MAL_PKCE_KEY = "anime-archive:mal:pkce:v1";
+  var MAL_PREFS_KEY = "anime-archive:mal:prefs:v1";
+  var malAuth = null;
+  var malPrefs = { autoPush: true, importOnConnect: true };
+  var malLastSync = null;
+  var malSyncing = false;
+  var malRefreshing = null;
+
+  function malLoadPrefs() {
+    var raw = null;
+    try { raw = window.localStorage && window.localStorage.getItem(MAL_PREFS_KEY); } catch (err) {}
+    if (!raw) { return; }
+    var data = null;
+    try { data = JSON.parse(raw); } catch (err) { return; }
+    if (!data || typeof data !== "object") { return; }
+    if (typeof data.autoPush === "boolean") { malPrefs.autoPush = data.autoPush; }
+    if (typeof data.importOnConnect === "boolean") { malPrefs.importOnConnect = data.importOnConnect; }
+  }
+
+  function malSavePrefs() {
+    try {
+      if (!window.localStorage) { return; }
+      window.localStorage.setItem(MAL_PREFS_KEY, JSON.stringify(malPrefs));
+    } catch (err) {}
+  }
+
+  function malLoadAuth() {
+    var raw = null;
+    try { raw = window.localStorage && window.localStorage.getItem(MAL_STORE_KEY); } catch (err) {}
+    if (!raw) { return; }
+    var data = null;
+    try { data = JSON.parse(raw); } catch (err) { return; }
+    if (!data || typeof data !== "object" || !data.access_token) { return; }
+    malAuth = {
+      access_token: String(data.access_token),
+      refresh_token: data.refresh_token ? String(data.refresh_token) : "",
+      expires_at: Number(data.expires_at) || 0,
+      username: data.username ? String(data.username) : ""
+    };
+  }
+
+  function malSaveAuth() {
+    try {
+      if (!window.localStorage) { return; }
+      if (!malAuth) { window.localStorage.removeItem(MAL_STORE_KEY); return; }
+      window.localStorage.setItem(MAL_STORE_KEY, JSON.stringify(malAuth));
+    } catch (err) {}
+  }
+
+  function malRandomString(len) {
+    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+    var out = "", i;
+    if (window.crypto && window.crypto.getRandomValues) {
+      var buf = new Uint32Array(len);
+      window.crypto.getRandomValues(buf);
+      for (i = 0; i < len; i++) { out += chars.charAt(buf[i] % chars.length); }
+      return out;
+    }
+    for (i = 0; i < len; i++) { out += chars.charAt(Math.floor(Math.random() * chars.length)); }
+    return out;
+  }
+
+  function malSetNote(msg) {
+    var note = $("malNote");
+    if (note) { note.textContent = msg || ""; }
+  }
+
+  function malSetSyncNote(msg) {
+    var note = $("malSyncNote");
+    if (note) { note.textContent = msg || ""; }
+  }
+
+  function renderMalSection() {
+    var outEl = $("malSignedOut"), inEl = $("malSignedIn");
+    if (outEl) { outEl.classList.toggle("hidden", !!malAuth); }
+    if (inEl) { inEl.classList.toggle("hidden", !malAuth); }
+    var label = $("malUsernameLabel");
+    if (label) { label.textContent = (malAuth && malAuth.username) ? "Connected as " + malAuth.username : ""; }
+    var ap = $("malAutoPushToggle");
+    if (ap) { ap.checked = !!malPrefs.autoPush; }
+    var im = $("malImportToggle");
+    if (im) { im.checked = !!malPrefs.importOnConnect; }
+    if (malAuth && malLastSync) {
+      malSetSyncNote(malLastSync.text + " (" + watchedAgo(malLastSync.at) + ")");
+    }
+  }
+
+  function malDisconnect(quiet) {
+    malAuth = null;
+    malLastSync = null;
+    malSaveAuth();
+    try { if (window.localStorage) { window.localStorage.removeItem(MAL_PKCE_KEY); } } catch (err) {}
+    renderMalSection();
+    if (!quiet) { malSetNote("Disconnected from MyAnimeList."); }
+  }
+
+  function malRefresh() {
+    if (malRefreshing) { return malRefreshing; }
+    if (!malAuth || !malAuth.refresh_token) { return Promise.resolve(false); }
+    var body = new URLSearchParams();
+    body.append("client_id", MAL_CLIENT_ID);
+    body.append("grant_type", "refresh_token");
+    body.append("refresh_token", malAuth.refresh_token);
+    malRefreshing = fetch(MAL_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString()
+    }).then(function (r) {
+      if (!r.ok) { throw new Error("Refresh failed " + r.status); }
+      return r.json();
+    }).then(function (data) {
+      if (!data || !data.access_token) { throw new Error("No access token"); }
+      malAuth.access_token = String(data.access_token);
+      if (data.refresh_token) { malAuth.refresh_token = String(data.refresh_token); }
+      malAuth.expires_at = Date.now() + (Number(data.expires_in) || 0) * 1000;
+      malSaveAuth();
+      malRefreshing = null;
+      return true;
+    }).catch(function () {
+      malRefreshing = null;
+      malDisconnect(true);
+      return false;
+    });
+    return malRefreshing;
+  }
+
+  function malGetAccessToken() {
+    if (!malAuth) { return Promise.resolve(null); }
+    if (malAuth.expires_at && malAuth.expires_at - 60000 > Date.now()) {
+      return Promise.resolve(malAuth.access_token);
+    }
+    return malRefresh().then(function (ok) {
+      return (ok && malAuth) ? malAuth.access_token : null;
+    });
+  }
+
+  function malFetchOnce(path, token, options) {
+    var headers = { "Authorization": "Bearer " + token };
+    if (options.body) { headers["Content-Type"] = "application/x-www-form-urlencoded"; }
+    return fetch(MAL_API + path, {
+      method: options.method || "GET",
+      headers: headers,
+      body: options.body || undefined
+    });
+  }
+
+  function malApi(path, options) {
+    options = options || {};
+    return malGetAccessToken().then(function (token) {
+      if (!token) { throw new Error("No MyAnimeList token"); }
+      return malFetchOnce(path, token, options);
+    }).then(function (r) {
+      if (r.status === 401) {
+        return malRefresh().then(function (ok) {
+          if (!ok || !malAuth) { throw new Error("MyAnimeList session expired"); }
+          return malFetchOnce(path, malAuth.access_token, options);
+        });
+      }
+      return r;
+    }).then(function (r) {
+      if (!r.ok) { throw new Error("MyAnimeList request failed " + r.status); }
+      return r.json();
+    });
+  }
+
+  function malStartConnect() {
+    var verifier = malRandomString(64);
+    var state = malRandomString(32);
+    try {
+      if (!window.localStorage) { malSetNote("Storage is unavailable, so the sign-in cannot start."); return; }
+      window.localStorage.setItem(MAL_PKCE_KEY, JSON.stringify({ verifier: verifier, state: state }));
+    } catch (err) { malSetNote("Storage is unavailable, so the sign-in cannot start."); return; }
+    malSetNote("Opening MyAnimeList...");
+    var params = "response_type=code" +
+      "&client_id=" + encodeURIComponent(MAL_CLIENT_ID) +
+      "&state=" + encodeURIComponent(state) +
+      "&redirect_uri=" + encodeURIComponent(MAL_REDIRECT_URI) +
+      "&code_challenge=" + encodeURIComponent(verifier) +
+      "&code_challenge_method=plain";
+    window.location.href = MAL_AUTH_URL + "?" + params;
+  }
+
+  function malExchangeCode(code, verifier) {
+    var body = new URLSearchParams();
+    body.append("client_id", MAL_CLIENT_ID);
+    body.append("grant_type", "authorization_code");
+    body.append("code", code);
+    body.append("code_verifier", verifier);
+    body.append("redirect_uri", MAL_REDIRECT_URI);
+    return fetch(MAL_TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString()
+    }).then(function (r) {
+      if (!r.ok) { throw new Error("Token exchange failed " + r.status); }
+      return r.json();
+    }).then(function (data) {
+      if (!data || !data.access_token) { throw new Error("No access token"); }
+      malAuth = {
+        access_token: String(data.access_token),
+        refresh_token: data.refresh_token ? String(data.refresh_token) : "",
+        expires_at: Date.now() + (Number(data.expires_in) || 0) * 1000,
+        username: ""
+      };
+      malSaveAuth();
+      return malApi("/users/@me", { method: "GET" }).then(function (me) {
+        if (me && me.name) { malAuth.username = String(me.name); malSaveAuth(); }
+      }).catch(function () { /* the connection works without the name */ });
+    });
+  }
+
+  function malHandleCallback() {
+    var params = null;
+    try { params = new URLSearchParams(window.location.search); } catch (err) { return; }
+    var code = params.get("code");
+    var state = params.get("state");
+    var errParam = params.get("error");
+    if (!code && !errParam) { return; }
+    var cleanUrl = function () {
+      try { window.history.replaceState({}, "", window.location.pathname); } catch (err) {}
+    };
+    if (errParam) {
+      cleanUrl();
+      malSetNote("MyAnimeList sign-in was not completed.");
+      showAccountPage();
+      return;
+    }
+    var stored = null;
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(MAL_PKCE_KEY);
+      stored = raw ? JSON.parse(raw) : null;
+    } catch (err) {}
+    try { if (window.localStorage) { window.localStorage.removeItem(MAL_PKCE_KEY); } } catch (err) {}
+    if (!stored || !stored.verifier || stored.state !== state) {
+      cleanUrl();
+      malSetNote("MyAnimeList sign-in could not be verified. Try connecting again.");
+      showAccountPage();
+      return;
+    }
+    malSetNote("Connecting to MyAnimeList...");
+    showAccountPage();
+    malExchangeCode(code, stored.verifier).then(function () {
+      cleanUrl();
+      malSetNote("");
+      renderMalSection();
+      if (malPrefs.importOnConnect) { malImportFromMal(true); }
+    }).catch(function () {
+      cleanUrl();
+      malDisconnect(true);
+      malSetNote("Couldn't connect to MyAnimeList. Try again.");
+      showAccountPage();
+    });
+  }
+
+  function malBuildMalMap() {
+    var map = {};
+    (catalog || []).forEach(function (e) {
+      if (!e || !e.mal) { return; }
+      var key = keyOf(e.p, e.id);
+      if (!map[e.mal]) { map[e.mal] = key; }
+    });
+    return map;
+  }
+
+  function malImportFromMal(auto) {
+    if (!malAuth) { return Promise.resolve(null); }
+    if (malSyncing) { return Promise.resolve(null); }
+    malSyncing = true;
+    if (!auto) { malSetSyncNote("Syncing from MyAnimeList..."); }
+    var map = malBuildMalMap();
+    var shows = 0, episodes = 0;
+    var fetchPage = function (path) {
+      return malApi(path, { method: "GET" }).then(function (data) {
+        (data && data.data || []).forEach(function (item) {
+          if (!item || !item.node || !item.list_status) { return; }
+          var watchedCount = Number(item.list_status.num_episodes_watched) || 0;
+          if (watchedCount < 1) { return; }
+          var key = map[item.node.id];
+          if (!key) { return; }
+          if (!state.watched[key]) { state.watched[key] = {}; }
+          var added = 0, n;
+          for (n = 1; n <= watchedCount; n++) {
+            if (!state.watched[key][n]) { state.watched[key][n] = true; added++; }
+          }
+          if (added > 0) { shows++; episodes += added; }
+        });
+        if (data && data.paging && data.paging.next) {
+          var next = String(data.paging.next);
+          var idx = next.indexOf("/v2/");
+          if (idx >= 0) { return fetchPage(next.slice(idx + 3)); }
+        }
+        return null;
+      });
+    };
+    return fetchPage("/users/@me/animelist?fields=list_status&limit=1000").then(function () {
+      malSyncing = false;
+      saveWatchHistory();
+      if (state.currentEntry) { renderEpisodeList(); }
+      malLastSync = {
+        at: Date.now(),
+        text: "Synced " + shows + (shows === 1 ? " show" : " shows") + ", " + episodes + (episodes === 1 ? " episode" : " episodes") + " from MyAnimeList"
+      };
+      malSetSyncNote(malLastSync.text + " (" + watchedAgo(malLastSync.at) + ")");
+      renderMalSection();
+    }).catch(function () {
+      malSyncing = false;
+      malSetSyncNote("Couldn't sync from MyAnimeList just now. Try again later.");
+    });
+  }
+
+  function malPushEpisode(entry, num, show) {
+    try {
+      if (!malAuth || !malPrefs.autoPush) { return; }
+      if (!entry || !entry.mal) { return; }
+      var malId = Number(entry.mal);
+      if (!isFinite(malId) || malId < 1) { return; }
+      var lastEp = entry.ep ? Number(entry.ep) : 0;
+      (show && show.eps || []).forEach(function (e) {
+        if (e && isFinite(Number(e[0])) && Number(e[0]) > lastEp) { lastEp = Number(e[0]); }
+      });
+      malApi("/anime/" + malId + "?fields=my_list_status,num_episodes", { method: "GET" }).then(function (data) {
+        var remote = 0;
+        if (data && data.my_list_status) { remote = Number(data.my_list_status.num_episodes_watched) || 0; }
+        var total = data ? Number(data.num_episodes) || 0 : 0;
+        if (total && num > total) { return; }
+        var next = Math.max(remote, num);
+        var status = (lastEp && num >= lastEp) ? "completed" : "watching";
+        var body = new URLSearchParams();
+        body.append("status", status);
+        body.append("num_watched_episodes", String(next));
+        return malApi("/anime/" + malId + "/my_list_status", { method: "PATCH", body: body.toString() }).then(function () {
+          malLastSync = {
+            at: Date.now(),
+            text: "Marked episode " + num + " of " + (entry.t || "this show") + " watched on MyAnimeList"
+          };
+          renderMalSection();
+        });
+      }).catch(function () { /* quiet: the local mark already happened */ });
+    } catch (err) { /* never break playback */ }
+  }
+
+  function wireMalSection() {
+    var connectBtn = $("malConnectBtn");
+    if (connectBtn) { connectBtn.addEventListener("click", function () { malStartConnect(); }); }
+    var disconnectBtn = $("malDisconnectBtn");
+    if (disconnectBtn) { disconnectBtn.addEventListener("click", function () { malDisconnect(false); }); }
+    var syncBtn = $("malSyncNowBtn");
+    if (syncBtn) { syncBtn.addEventListener("click", function () { malImportFromMal(false); }); }
+    var ap = $("malAutoPushToggle");
+    if (ap) { ap.addEventListener("change", function () { malPrefs.autoPush = !!ap.checked; malSavePrefs(); }); }
+    var im = $("malImportToggle");
+    if (im) { im.addEventListener("change", function () { malPrefs.importOnConnect = !!im.checked; malSavePrefs(); }); }
+    renderMalSection();
   }
 
   function resumeContinue(key, ep) {
@@ -3373,6 +3755,7 @@
       state.watched[state.currentKey][num] = true;
     }
     recordWatchHistory(num);
+    malPushEpisode(entry, num, show);
     var area = $("playerArea"), note = $("playerNote");
     openEpisodeView();
     renderEpisodeList();
@@ -3535,6 +3918,7 @@
     $("bookmarksView").classList.add("hidden");
     $("sectionView").classList.add("hidden");
     $("scheduleView").classList.add("hidden");
+    $("accountView").classList.add("hidden");
     $("episodeView").classList.add("hidden");
     $("showDetail").classList.remove("hidden");
     setDetailTab("overview");
@@ -3582,6 +3966,7 @@
       $("searchView").classList.add("hidden");
       $("bookmarksView").classList.add("hidden");
       $("scheduleView").classList.add("hidden");
+      $("accountView").classList.add("hidden");
       if (showSectionPage()) {
         setActiveTab("home");
         return;
@@ -3593,6 +3978,7 @@
       $("searchView").classList.add("hidden");
       $("bookmarksView").classList.add("hidden");
       $("browseView").classList.add("hidden");
+      $("accountView").classList.add("hidden");
       $("scheduleView").classList.remove("hidden");
       setActiveTab("schedule");
       renderSchedule();
@@ -3601,6 +3987,7 @@
       $("scheduleView").classList.add("hidden");
       $("browseView").classList.add("hidden");
       $("bookmarksView").classList.add("hidden");
+      $("accountView").classList.add("hidden");
       $("searchView").classList.remove("hidden");
       setActiveTab("search");
       renderSearchGrid();
@@ -3609,6 +3996,7 @@
       $("scheduleView").classList.add("hidden");
       $("browseView").classList.add("hidden");
       $("searchView").classList.add("hidden");
+      $("accountView").classList.add("hidden");
       $("bookmarksView").classList.remove("hidden");
       setActiveTab("watchlist");
       renderBookmarks();
@@ -3617,6 +4005,7 @@
       $("scheduleView").classList.add("hidden");
       $("searchView").classList.add("hidden");
       $("bookmarksView").classList.add("hidden");
+      $("accountView").classList.add("hidden");
       $("browseView").classList.remove("hidden");
       setActiveTab("home");
       renderBannerTicker();
@@ -3632,6 +4021,7 @@
     $("sectionView").classList.add("hidden");
     $("searchView").classList.add("hidden");
     $("bookmarksView").classList.add("hidden");
+    $("accountView").classList.add("hidden");
     $("browseView").classList.remove("hidden");
     setActiveTab("home");
     renderBannerTicker();
@@ -3662,6 +4052,7 @@
     $("bookmarksView").classList.add("hidden");
     $("scheduleView").classList.add("hidden");
     $("sectionView").classList.add("hidden");
+    $("accountView").classList.add("hidden");
     $("searchView").classList.remove("hidden");
     setActiveTab("search");
     renderSearchGrid();
@@ -3677,6 +4068,7 @@
     $("searchView").classList.add("hidden");
     $("scheduleView").classList.add("hidden");
     $("sectionView").classList.add("hidden");
+    $("accountView").classList.add("hidden");
     $("bookmarksView").classList.remove("hidden");
     setActiveTab("watchlist");
     renderBookmarks();
@@ -3691,6 +4083,7 @@
     $("searchView").classList.add("hidden");
     $("bookmarksView").classList.add("hidden");
     $("sectionView").classList.add("hidden");
+    $("accountView").classList.add("hidden");
     $("scheduleView").classList.remove("hidden");
     setActiveTab("schedule");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3699,6 +4092,26 @@
 
   function focusSearch() {
     showSearchPage();
+  }
+
+  /* The Account button in the header opens the Account settings
+     page: Google sign-in (same form as before, now on the page)
+     and the MyAnimeList connection. Like the other bottom-tab
+     pages it hides every other main view; it has no bottom tab
+     of its own, so no tab is marked active while it is open. */
+  function showAccountPage() {
+    returnView = "account";
+    closeSectionPage();
+    if (!$("showDetail").classList.contains("hidden") || !$("episodeView").classList.contains("hidden")) { closeDetail(); }
+    $("browseView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("scheduleView").classList.add("hidden");
+    $("sectionView").classList.add("hidden");
+    $("accountView").classList.remove("hidden");
+    setActiveTab("account");
+    renderMalSection();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   /* ---------- schedule ---------- */
@@ -3979,6 +4392,10 @@
     loadBookmarks();
     initFirebase();
     wireAccountPanel();
+    malLoadPrefs();
+    malLoadAuth();
+    wireMalSection();
+    malHandleCallback();
     renderRails();
     renderGrid();
     renderSearchGrid();
