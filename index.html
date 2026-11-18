@@ -67,6 +67,35 @@
   }
   .icon-btn svg { width: 20px; height: 20px; display: block; }
   .icon-btn:hover { border-color: var(--accent); }
+  .icon-btn.signed-in { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  /* ---------- account panel ---------- */
+  .account-panel {
+    position: fixed; top: 66px; right: 18px; z-index: 60;
+    width: min(340px, calc(100vw - 36px));
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px 18px 14px; box-shadow: 0 12px 32px rgba(0,0,0,.55);
+  }
+  .account-panel h2 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+  .acct-sub { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+  .acct-label { display: block; margin: 10px 0 4px; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+  .acct-input {
+    width: 100%; padding: 9px 11px; border-radius: 10px;
+    background: var(--bg2); border: 1px solid var(--border); color: var(--text); font-size: 14px;
+  }
+  .acct-input:focus { outline: none; border-color: var(--accent); }
+  .acct-row { display: flex; gap: 8px; margin-top: 14px; }
+  .acct-row .acct-btn { flex: 1; }
+  .acct-btn {
+    display: block; width: 100%; margin-top: 10px; padding: 10px 14px;
+    background: var(--accent); color: var(--accent-ink); border: none; border-radius: 999px;
+    font-size: 14px; font-weight: 800; cursor: pointer; text-align: center;
+  }
+  .acct-btn:hover { filter: brightness(1.12); }
+  .acct-btn.ghost { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .acct-btn.google { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .acct-email { margin: 0 0 4px; font-weight: 700; word-break: break-all; }
+  .acct-note { margin: 10px 0 0; color: var(--muted); font-size: 12.5px; min-height: 1em; }
 
   main { padding-bottom: 8px; }
 
@@ -935,6 +964,9 @@
     .tabbar { gap: 4px; }
   }
 </style>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -946,8 +978,37 @@
     <button type="button" class="icon-btn" id="topSearchBtn" aria-label="Search titles">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
     </button>
+    <button type="button" class="icon-btn" id="topAccountBtn" aria-label="Account">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/></svg>
+    </button>
   </div>
 </header>
+
+<div class="account-panel hidden" id="accountPanel" role="dialog" aria-label="Account">
+  <div id="accountSignedOut">
+    <h2>Account</h2>
+    <p class="acct-sub">Sign in to sync Continue Watching and bookmarks across devices.</p>
+    <form id="accountForm">
+      <label class="acct-label" for="accountEmail">Email</label>
+      <input class="acct-input" type="email" id="accountEmail" autocomplete="email" required>
+      <label class="acct-label" for="accountPassword">Password</label>
+      <input class="acct-input" type="password" id="accountPassword" autocomplete="current-password" required>
+      <div class="acct-row">
+        <button type="submit" class="acct-btn" id="accountSignInBtn">Sign in</button>
+        <button type="button" class="acct-btn ghost" id="accountCreateBtn">Create account</button>
+      </div>
+      <button type="button" class="acct-btn google" id="accountGoogleBtn">Continue with Google</button>
+    </form>
+    <p class="acct-note" id="accountNote"></p>
+  </div>
+  <div id="accountSignedIn" class="hidden">
+    <h2>Signed in</h2>
+    <p class="acct-email" id="accountEmailLabel"></p>
+    <p class="acct-sub">Continue Watching and bookmarks sync to this account.</p>
+    <button type="button" class="acct-btn" id="accountSignOutBtn">Sign out</button>
+    <p class="acct-note" id="accountSyncNote"></p>
+  </div>
+</div>
 
 <div class="wrap">
   <main>
@@ -1611,6 +1672,43 @@
     if (state.watchlistOnly) { renderGrid(); }
     var bmView = $("bookmarksView");
     if (bmView && !bmView.classList.contains("hidden")) { renderBookmarks(); }
+    saveBookmarks();
+    cloudSave();
+  }
+
+  /* ----- Bookmarks persistence (this device) -----
+     Bookmarks used to live only in memory, so they vanished on
+     reload. They are now saved in local storage under one key,
+     so signed-out bookmarks survive a reload and there is local
+     data to merge with the cloud copy on sign-in. Guarded like
+     the Continue Watching store: any storage failure just keeps
+     the in-memory list for the visit. */
+  var BM_STORAGE_KEY = "anime-archive:bookmarks:v1";
+
+  function saveBookmarks() {
+    try {
+      var store = window.localStorage;
+      if (!store) { return; }
+      store.setItem(BM_STORAGE_KEY, JSON.stringify(Object.keys(watchlist)));
+    } catch (err) { /* storage unavailable: keep the in-memory list */ }
+  }
+
+  function loadBookmarks() {
+    var raw = null;
+    try {
+      var store = window.localStorage;
+      if (!store) { return; }
+      raw = store.getItem(BM_STORAGE_KEY);
+    } catch (err) { return; }
+    if (!raw) { return; }
+    var data = null;
+    try { data = JSON.parse(raw); } catch (err) { return; }
+    if (!Array.isArray(data)) { return; }
+    var restored = {};
+    data.forEach(function (k) {
+      if (typeof k === "string" && k) { restored[k] = true; }
+    });
+    watchlist = restored;
   }
 
   /* ---------- latest episodes ---------- */
@@ -1722,6 +1820,7 @@
         watched: state.watched
       }));
     } catch (err) { /* storage unavailable: keep the in-memory list */ }
+    cloudSave();
   }
 
   function loadWatchHistory() {
@@ -1817,6 +1916,260 @@
     state.watchHistory = state.watchHistory.filter(function (h) { return h.key !== key; });
     saveWatchHistory();
     renderBannerTicker();
+  }
+
+  /* ----- Firebase accounts + cloud sync (optional) -----
+     Sign-in is provided by Firebase Auth (email/password and
+     Google) with the data in Firestore, one document per user at
+     users/{uid}. The SDKs load deferred from the Google CDN; if
+     they are blocked or fail, firebaseAvailable() is false and the
+     page keeps working exactly as before on local storage only.
+     Only Continue Watching and bookmarks sync. The per-episode
+     watched map stays local-only and is never written to the
+     cloud. On sign-in the cloud copy and the local copy merge
+     (Continue Watching: union by show key, newer `at` wins, newest
+     first, cap 10; bookmarks: union of keys), the merged result is
+     saved locally and written back to Firestore. On sign-out the
+     page falls back to local storage; local data is never wiped.
+     Cloud writes are debounced ~800ms and failures stay quiet: a
+     small note in the account panel, never a page break. */
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBvdpmPHUT0zG5VzMLev9Qr3D_JJObd-lI",
+    authDomain: "anime-archive-45f8b.firebaseapp.com",
+    projectId: "anime-archive-45f8b",
+    storageBucket: "anime-archive-45f8b.firebasestorage.app",
+    messagingSenderId: "426729719999",
+    appId: "1:426729719999:web:6dfb7d403a80f44f371e0a"
+  };
+  var fbAuth = null;
+  var fbDb = null;
+  var fbUser = null;
+  var fbCloudTimer = null;
+
+  function firebaseAvailable() {
+    return typeof firebase !== "undefined" && firebase.apps && firebase.auth && firebase.firestore;
+  }
+
+  function setAccountNote(msg) {
+    var note = $("accountNote");
+    if (note) { note.textContent = msg || ""; }
+  }
+
+  function setSyncNote(msg) {
+    var note = $("accountSyncNote");
+    if (note) { note.textContent = msg || ""; }
+  }
+
+  function updateAccountButton() {
+    var btn = $("topAccountBtn");
+    if (!btn) { return; }
+    if (fbUser) {
+      btn.classList.add("signed-in");
+      btn.setAttribute("aria-label", "Account: " + (fbUser.email || fbUser.displayName || "signed in"));
+    } else {
+      btn.classList.remove("signed-in");
+      btn.setAttribute("aria-label", "Account");
+    }
+  }
+
+  function showAccountViews() {
+    var outEl = $("accountSignedOut"), inEl = $("accountSignedIn");
+    if (outEl) { outEl.classList.toggle("hidden", !!fbUser); }
+    if (inEl) { inEl.classList.toggle("hidden", !fbUser); }
+    var label = $("accountEmailLabel");
+    if (label) { label.textContent = fbUser ? (fbUser.email || fbUser.displayName || "Signed in") : ""; }
+    updateAccountButton();
+  }
+
+  /* Same validation loadWatchHistory applies to stored history:
+     { key, p, id, t, ep, at }, deduped by key, newest first, cap 10. */
+  function cleanHistoryEntries(list) {
+    var seen = {}, out = [];
+    if (!Array.isArray(list)) { return out; }
+    list.forEach(function (h) {
+      if (!h || typeof h !== "object") { return; }
+      if (!h.key || !h.p || h.id == null || seen[h.key]) { return; }
+      var ep = Number(h.ep);
+      if (!isFinite(ep) || ep < 1) { return; }
+      var at = Number(h.at);
+      seen[h.key] = true;
+      out.push({
+        key: String(h.key), p: String(h.p), id: h.id,
+        t: h.t ? String(h.t) : "Untitled",
+        ep: Math.floor(ep), at: isFinite(at) && at > 0 ? at : Date.now()
+      });
+    });
+    out.sort(function (a, b) { return b.at - a.at; });
+    return out.slice(0, 10);
+  }
+
+  function mergeHistory(localList, cloudList) {
+    var byKey = {};
+    cleanHistoryEntries(localList).forEach(function (h) { byKey[h.key] = h; });
+    cleanHistoryEntries(cloudList).forEach(function (h) {
+      if (!byKey[h.key] || h.at > byKey[h.key].at) { byKey[h.key] = h; }
+    });
+    var out = Object.keys(byKey).map(function (k) { return byKey[k]; });
+    out.sort(function (a, b) { return b.at - a.at; });
+    return out.slice(0, 10);
+  }
+
+  function mergeBookmarks(localMap, cloudList) {
+    var out = {};
+    Object.keys(localMap || {}).forEach(function (k) { if (k) { out[k] = true; } });
+    if (Array.isArray(cloudList)) {
+      cloudList.forEach(function (k) { if (typeof k === "string" && k) { out[k] = true; } });
+    }
+    return out;
+  }
+
+  function cloudSave() {
+    if (!fbUser || !fbDb) { return; }
+    if (fbCloudTimer) { clearTimeout(fbCloudTimer); }
+    fbCloudTimer = setTimeout(function () {
+      fbCloudTimer = null;
+      if (!fbUser || !fbDb) { return; }
+      fbDb.collection("users").doc(fbUser.uid).set({
+        continueWatching: state.watchHistory.slice(0, 10),
+        bookmarks: Object.keys(watchlist)
+      }, { merge: true }).catch(function () {
+        setSyncNote("Couldn't sync just now. Your lists are still saved on this device.");
+      });
+    }, 800);
+  }
+
+  function cloudLoadAndMerge() {
+    if (!fbUser || !fbDb) { return; }
+    fbDb.collection("users").doc(fbUser.uid).get().then(function (doc) {
+      if (!fbUser) { return; }
+      var data = (doc && doc.exists) ? doc.data() : null;
+      if (!data) { cloudSave(); return; }
+      state.watchHistory = mergeHistory(state.watchHistory, data.continueWatching);
+      watchlist = mergeBookmarks(watchlist, data.bookmarks);
+      saveWatchHistory();
+      saveBookmarks();
+      syncWatchlistUi();
+      renderBannerTicker();
+      renderBookmarks();
+      cloudSave();
+    }).catch(function () {
+      setSyncNote("Couldn't load your saved lists just now. Showing what's on this device.");
+    });
+  }
+
+  function friendlyAuthError(err) {
+    var code = err && err.code ? String(err.code) : "";
+    if (code === "auth/wrong-password" || code === "auth/invalid-credential" ||
+        code === "auth/invalid-login-credentials") { return "Wrong password."; }
+    if (code === "auth/email-already-in-use") { return "That email is already registered."; }
+    if (code === "auth/user-not-found") { return "No account found for that email."; }
+    if (code === "auth/invalid-email") { return "That email address doesn't look right."; }
+    if (code === "auth/weak-password") { return "Choose a password with at least 6 characters."; }
+    if (code === "auth/network-request-failed") { return "Couldn't reach the sign-in service. Check your connection and try again."; }
+    if (code === "auth/popup-closed-by-user") { return "Google sign-in was closed before it finished."; }
+    if (code === "auth/too-many-requests") { return "Too many tries. Wait a bit and try again."; }
+    if (code === "auth/popup-blocked") { return "The Google sign-in window was blocked. Allow popups and try again."; }
+    return "Couldn't sign in. Try again.";
+  }
+
+  function initFirebase() {
+    if (!firebaseAvailable()) {
+      setAccountNote("Sign-in unavailable right now.");
+      return;
+    }
+    try {
+      if (!firebase.apps.length) { firebase.initializeApp(FIREBASE_CONFIG); }
+      fbAuth = firebase.auth();
+      fbDb = firebase.firestore();
+    } catch (err) {
+      setAccountNote("Sign-in unavailable right now.");
+      return;
+    }
+    fbAuth.onAuthStateChanged(function (user) {
+      fbUser = user || null;
+      setAccountNote("");
+      setSyncNote("");
+      showAccountViews();
+      if (fbUser) { cloudLoadAndMerge(); }
+    });
+  }
+
+  function toggleAccountPanel(force) {
+    var panel = $("accountPanel");
+    if (!panel) { return; }
+    var open = typeof force === "boolean" ? force : panel.classList.contains("hidden");
+    panel.classList.toggle("hidden", !open);
+  }
+
+  function wireAccountPanel() {
+    var btn = $("topAccountBtn");
+    if (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        toggleAccountPanel();
+      });
+    }
+    var panel = $("accountPanel");
+    if (panel) {
+      document.addEventListener("click", function (ev) {
+        if (panel.classList.contains("hidden")) { return; }
+        if (panel.contains(ev.target)) { return; }
+        if (btn && btn.contains(ev.target)) { return; }
+        toggleAccountPanel(false);
+      });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape") { toggleAccountPanel(false); }
+      });
+    }
+    var form = $("accountForm");
+    if (form) {
+      form.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        if (!fbAuth) { setAccountNote("Sign-in unavailable right now."); return; }
+        var email = $("accountEmail").value.replace(/^\s+|\s+$/g, "");
+        var pw = $("accountPassword").value;
+        if (!email || !pw) { setAccountNote("Enter your email and password."); return; }
+        setAccountNote("Signing in...");
+        fbAuth.signInWithEmailAndPassword(email, pw).then(function () {
+          setAccountNote("");
+          toggleAccountPanel(false);
+        }).catch(function (err) { setAccountNote(friendlyAuthError(err)); });
+      });
+    }
+    var createBtn = $("accountCreateBtn");
+    if (createBtn) {
+      createBtn.addEventListener("click", function () {
+        if (!fbAuth) { setAccountNote("Sign-in unavailable right now."); return; }
+        var email = $("accountEmail").value.replace(/^\s+|\s+$/g, "");
+        var pw = $("accountPassword").value;
+        if (!email || !pw) { setAccountNote("Enter an email and password first."); return; }
+        setAccountNote("Creating your account...");
+        fbAuth.createUserWithEmailAndPassword(email, pw).then(function () {
+          setAccountNote("");
+          toggleAccountPanel(false);
+        }).catch(function (err) { setAccountNote(friendlyAuthError(err)); });
+      });
+    }
+    var googleBtn = $("accountGoogleBtn");
+    if (googleBtn) {
+      googleBtn.addEventListener("click", function () {
+        if (!fbAuth || typeof firebase === "undefined") { setAccountNote("Sign-in unavailable right now."); return; }
+        setAccountNote("Opening Google sign-in...");
+        fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function () {
+          setAccountNote("");
+          toggleAccountPanel(false);
+        }).catch(function (err) { setAccountNote(friendlyAuthError(err)); });
+      });
+    }
+    var signOutBtn = $("accountSignOutBtn");
+    if (signOutBtn) {
+      signOutBtn.addEventListener("click", function () {
+        if (!fbAuth) { return; }
+        fbAuth.signOut().catch(function () {
+          setSyncNote("Couldn't sign out just now. Try again.");
+        });
+      });
+    }
   }
 
   function resumeContinue(key, ep) {
@@ -3622,6 +3975,9 @@
     // Restore Continue Watching from this device before the first
     // render, so a returning reader sees their last 10 right away.
     loadWatchHistory();
+    loadBookmarks();
+    initFirebase();
+    wireAccountPanel();
     renderRails();
     renderGrid();
     renderSearchGrid();
