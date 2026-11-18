@@ -1682,13 +1682,16 @@
      episode total. Cards only know the catalog entry, so the total
      is the catalog episodes field; the detail page passes the
      loaded episode list length instead. A show with no known total
-     (or nothing watched yet) shows nothing. */
+     but at least one watched episode still shows the 6px sliver
+     (partial progress is known even without a total); a show with
+     nothing watched yet shows nothing. */
   function watchedProgress(key, total) {
     total = Number(total) || 0;
-    if (!key || total < 1) { return null; }
+    if (!key) { return null; }
     var map = state.watched[key] || {};
     var n = Object.keys(map).length;
     if (n < 1) { return null; }
+    if (total < 1) { return { watched: n, total: 0, pct: 1, done: false }; }
     if (n > total) { n = total; }
     return { watched: n, total: total, pct: Math.max(1, Math.round(n / total * 100)), done: n >= total };
   }
@@ -3339,9 +3342,18 @@
     var entry = state.currentEntry, show = state.currentShow;
     if (!entry || !show) { el.innerHTML = ""; return; }
     var total = (show.eps && show.eps.length) || Number(entry.ep) || 0;
-    if (!total) { el.innerHTML = ""; return; }
     var map = state.watched[state.currentKey] || {};
     var n = Object.keys(map).length;
+    if (!total) {
+      /* No known total (e.g. a catalog-only record whose progress
+         came from a MAL import): still show that episodes were
+         watched, with a sliver bar and no count against a total. */
+      if (n < 1) { el.innerHTML = ""; return; }
+      el.innerHTML =
+        '<span class="dp-text">' + n + (n === 1 ? " episode" : " episodes") + " watched</span>" +
+        '<span class="dp-bar"><span style="width:1%;min-width:6px"></span></span>';
+      return;
+    }
     if (n > total) { n = total; }
     var pct = n < 1 ? 0 : Math.max(1, Math.round(n / total * 100));
     el.innerHTML =
