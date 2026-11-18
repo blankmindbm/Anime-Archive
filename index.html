@@ -1,0 +1,3963 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>Anime Archive</title>
+<style>
+  :root {
+    --bg: #060607;
+    --bg2: #101013;
+    --card: #141417;
+    --card2: #1d1d21;
+    --text: #f5f5f7;
+    --muted: #9b9ba4;
+    --accent: #a970ff;
+    --accent-ink: #18052e;
+    --border: #232329;
+    --ready-bg: #14532d; --ready-bd: #22c55e; --ready-tx: #bbf7d0;
+    --cat-bg: #3f3f46; --cat-bd: #71717a; --cat-tx: #e4e4e7;
+    --exp-bg: #2a1650; --exp-bd: #a970ff; --exp-tx: #d9c6ff;
+    --sub-bg: #172554; --sub-bd: #60a5fa; --sub-tx: #bfdbfe;
+    --player-bg: #000000;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html {
+    scrollbar-color: #2c2c31 var(--bg);
+    /* Anything scrolled into view (a poster card, a section, the
+       episode list) stops this far above the viewport bottom, so it
+       never comes to rest underneath the floating tab bar (about
+       74px tall including its bottom offset). */
+    scroll-padding-bottom: 124px;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    line-height: 1.5;
+    /* Bottom padding clears the floating tab bar (60px tall, 14px above
+       the bottom edge, plus any safe-area inset) with room to spare, so
+       the last row of content can always scroll fully above it. */
+    padding-bottom: 148px;
+  }
+  a { color: var(--accent); }
+  button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 18px; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(6,6,7,.88);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-bottom: 1px solid #17171b;
+  }
+  .topbar-in { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .logo { font-size: 21px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+  .logo b { color: var(--accent); font-weight: 800; }
+  .topbar .spacer { flex: 1; }
+  .top-count { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; border-radius: 999px; flex: 0 0 auto;
+    background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer;
+  }
+  .icon-btn svg { width: 20px; height: 20px; display: block; }
+  .icon-btn:hover { border-color: var(--accent); }
+
+  main { padding-bottom: 8px; }
+
+  /* ---------- continue watching banner ---------- */
+  /* Mizuki-style hero banner: one full-width slide per watched show,
+     backdrop art fading into the page at the bottom, a glass pill,
+     big title, score / episode meta, a white Resume pill, and
+     progress dots. Slides cross-fade and auto-advance; dots, arrows,
+     and swipe move between them. */
+  .banner-ticker { margin-top: 16px; }
+  .banner-ticker:empty, .banner-ticker.is-empty { display: none; }
+  .ticker-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .ticker-head .tick { width: 5px; height: 20px; border-radius: 3px; background: var(--accent); flex: 0 0 auto; }
+  .ticker-head h2 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; flex: 1; min-width: 0; }
+  .ticker-head .ticker-note { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+  .ticker-shuffle {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    white-space: nowrap; min-height: 0;
+  }
+  .ticker-shuffle:hover { border-color: var(--accent); color: var(--accent); }
+  .ticker-shuffle svg { width: 14px; height: 14px; display: block; }
+  .cw-stage {
+    position: relative; border-radius: 20px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08); background: var(--bg2);
+    height: clamp(470px, 64vh, 560px);
+  }
+  .cw-slide {
+    position: absolute; inset: 0; opacity: 0; pointer-events: none;
+    transition: opacity .55s ease;
+    background: linear-gradient(158deg, hsl(var(--h, 262) 58% 38%) 0%, hsl(calc(var(--h, 262) + 45) 62% 15%) 88%);
+  }
+  .cw-slide.on { opacity: 1; pointer-events: auto; }
+  .cw-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center 20%; display: block;
+  }
+  .cw-shade {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to top, rgba(4,4,6,.97) 0%, rgba(4,4,6,.58) 44%, rgba(4,4,6,.06) 70%, rgba(4,4,6,.28) 100%);
+  }
+  .cw-remove {
+    position: absolute; top: 14px; right: 14px; z-index: 3;
+    width: 34px; height: 34px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(8,8,10,.62); border: 1px solid rgba(255,255,255,.22); color: #fff; cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .cw-remove svg { width: 14px; height: 14px; display: block; }
+  .cw-remove:hover { border-color: var(--accent); color: var(--accent); }
+  .cw-info { position: absolute; left: 22px; right: 22px; bottom: 46px; z-index: 2; max-width: 660px; }
+  .cw-pill {
+    display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+    background: rgba(10,10,14,.55); border: 1px solid rgba(255,255,255,.30); color: #fff;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border-radius: 999px; padding: 7px 14px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cw-pill .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); flex: 0 0 auto; }
+  .cw-info h3 {
+    margin: 14px 0 10px; font-size: clamp(28px, 4.6vw, 42px); font-weight: 800;
+    line-height: 1.12; letter-spacing: -.01em; color: #fff;
+    text-shadow: 0 2px 18px rgba(0,0,0,.65);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .cw-meta {
+    display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+    color: rgba(255,255,255,.88); font-size: 14px; font-weight: 600;
+    text-shadow: 0 1px 8px rgba(0,0,0,.6); font-variant-numeric: tabular-nums;
+  }
+  .cw-score {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(169,112,255,.22); border: 1px solid var(--accent); color: #ecdcff;
+    font-size: 13.5px; font-weight: 800;
+    padding: 3px 10px; border-radius: 8px;
+  }
+  .cw-score .star { color: var(--accent); font-size: 13px; }
+  .cw-meta .sep { opacity: .45; }
+  .cw-resume {
+    margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: min(520px, 100%); background: #fff; color: #111; border: 0; cursor: pointer;
+    border-radius: 999px; padding: 15px 22px; font-size: 16px; font-weight: 800;
+    box-shadow: 0 12px 32px rgba(0,0,0,.5);
+  }
+  .cw-resume svg { width: 17px; height: 17px; display: block; flex: 0 0 auto; }
+  .cw-resume:hover { background: var(--accent); color: var(--accent-ink); }
+  .cw-dots {
+    position: absolute; left: 0; right: 0; bottom: 10px; z-index: 3;
+    display: flex; justify-content: center; gap: 2px;
+  }
+  .cw-dot {
+    width: 18px; height: 18px; min-height: 0; padding: 7px 2px; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.35); background-clip: content-box; border-radius: 999px;
+    transition: width .3s ease, background .3s ease;
+  }
+  .cw-dot.on { width: 34px; background-color: var(--accent); }
+  .cw-nav {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+    width: 42px; height: 42px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(8,8,10,.55); border: 1px solid rgba(255,255,255,.22); color: #fff; cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .cw-nav svg { width: 19px; height: 19px; display: block; }
+  .cw-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .cw-nav.prev { left: 14px; }
+  .cw-nav.next { right: 14px; }
+  .cw-empty {
+    position: relative; border-radius: 20px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08);
+    background: linear-gradient(158deg, hsl(262 58% 30%) 0%, hsl(307 62% 12%) 88%);
+    padding: 40px 22px 34px;
+  }
+  .cw-empty .cw-pill { margin-bottom: 12px; }
+  .cw-empty-msg { color: rgba(255,255,255,.85); font-size: 15px; line-height: 1.6; margin: 0; max-width: 560px; }
+  @media (max-width: 640px) {
+    .cw-stage { height: clamp(480px, 72vh, 560px); border-radius: 18px; }
+    .cw-info { left: 16px; right: 16px; bottom: 44px; }
+    .cw-nav { display: none; }
+    .ticker-head .ticker-note { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cw-slide { transition: none; }
+    .cw-dot { transition: none; }
+  }
+
+  /* ---------- rails ---------- */
+  .rail-sec { margin-top: 30px; }
+  .rail-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .rail-head .tick { width: 5px; height: 24px; border-radius: 3px; background: var(--accent); flex: 0 0 auto; }
+  .rail-head h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; flex: 1; min-width: 0; }
+  .see-all {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 15px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; min-height: 0;
+  }
+  .see-all:hover { border-color: var(--accent); color: var(--accent); }
+  .rail {
+    display: flex; gap: 16px; overflow-x: auto; padding: 2px 2px 10px;
+    scroll-snap-type: x proximity; scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+
+  /* ---------- poster cards ---------- */
+  .pcard { cursor: pointer; flex: 0 0 auto; scroll-snap-align: start; }
+  .rail .pcard { width: 158px; }
+  .poster {
+    position: relative; aspect-ratio: 2 / 3; border-radius: 14px; overflow: hidden;
+    background: linear-gradient(158deg, hsl(var(--h, 262) 58% 38%) 0%, hsl(calc(var(--h, 262) + 45) 62% 15%) 88%);
+    border: 1px solid rgba(255,255,255,.07);
+  }
+  .poster::before {
+    content: attr(data-initial);
+    position: absolute; top: -26px; right: -8px;
+    font-size: 128px; font-weight: 900; line-height: 1;
+    color: rgba(255,255,255,.13); pointer-events: none;
+  }
+  .poster::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 55%;
+    background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0));
+    pointer-events: none;
+  }
+  .poster-title {
+    position: absolute; left: 11px; right: 11px; bottom: 10px; z-index: 1;
+    font-weight: 800; font-size: 14.5px; line-height: 1.28; letter-spacing: .015em;
+    text-transform: uppercase; color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,.5);
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .poster-img {
+    position: absolute; inset: 0; z-index: 0;
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .poster.has-art::before, .poster.has-art::after { display: none; }
+  .poster.has-art .poster-title { display: none; }
+  .detail-poster { width: 220px; max-width: 62vw; margin: 16px 0 4px; }
+  .detail-poster:empty { display: none; }
+  .detail-poster .poster { width: 100%; box-shadow: 0 14px 34px rgba(0,0,0,.45); }
+  .score-chip {
+    position: absolute; top: 8px; left: 8px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(8,8,10,.74); border: 1px solid rgba(255,255,255,.09);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    color: #fff; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+    padding: 3px 8px; border-radius: 8px;
+  }
+  .score-chip .star { color: var(--accent); font-size: 12px; }
+  .bm-btn {
+    position: absolute; top: 6px; right: 6px; z-index: 2;
+    width: 34px; height: 34px; min-height: 0; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(8,8,10,.66); border: 1px solid rgba(255,255,255,.10);
+    color: #fff; cursor: pointer; padding: 0;
+  }
+  .bm-btn svg { width: 16px; height: 16px; display: block; }
+  .bm-btn.in-list { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .pcard h3 {
+    margin: 9px 0 2px; font-size: 14.5px; font-weight: 650; line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .pcard .pmeta { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .pcard:hover .poster { border-color: var(--accent); }
+
+  /* trending rail: big outlined rank numbers */
+  .trend-card { display: flex; align-items: flex-end; flex: 0 0 auto; scroll-snap-align: start; cursor: pointer; }
+  .trend-num {
+    font-size: 118px; font-weight: 900; line-height: .78; margin-right: -14px; padding-bottom: 34px;
+    color: transparent; -webkit-text-stroke: 2px #4a4a52; user-select: none;
+  }
+  .trend-card .pcard { width: 158px; }
+  .trend-card:hover .poster { border-color: var(--accent); }
+
+  /* ---------- latest episodes ---------- */
+  .rail-head.wrap { flex-wrap: wrap; }
+  .updated-label { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+  .refresh-btn { display: inline-flex; align-items: center; gap: 6px; }
+  .refresh-btn svg { width: 14px; height: 14px; display: block; }
+  .refresh-btn.spinning svg { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .refresh-btn.spinning svg { animation: none; } }
+  .ep-badge {
+    position: absolute; left: 8px; bottom: 8px; z-index: 2;
+    background: var(--accent); color: var(--accent-ink);
+    font-size: 12px; font-weight: 800; letter-spacing: .02em;
+    padding: 3px 8px; border-radius: 8px; font-variant-numeric: tabular-nums;
+  }
+  .latest-grid { margin-top: 16px; }
+
+  /* ---------- section page (See All) ---------- */
+  .section-page-head { margin-top: 18px; }
+  .section-back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .section-back-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 15px 8px 11px; font-size: 13.5px; font-weight: 700; cursor: pointer; min-height: 0;
+  }
+  .section-back-btn svg { width: 16px; height: 16px; display: block; }
+  .section-back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .section-page-title { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; display: flex; align-items: center; gap: 10px; }
+  .section-page-title .tick { width: 5px; height: 26px; border-radius: 3px; background: var(--accent); flex: 0 0 auto; display: inline-block; }
+  .section-page-sub { margin: 6px 0 0 15px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .section-page-count { margin: 10px 0 0 15px; color: var(--muted); font-size: 13.5px; }
+  .section-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 20px 16px; margin-top: 16px; }
+  .section-grid .pcard { width: auto; }
+  @media (max-width: 640px) {
+    .section-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px 12px; }
+    .section-page-title { font-size: 23px; }
+    .section-page-sub, .section-page-count { margin-left: 0; }
+  }
+
+  /* ---------- schedule ---------- */
+  .sched-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-top: 20px; }
+  .sched-title { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
+  .sched-sub { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  .sched-controls { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sched-filter { display: inline-flex; background: var(--card); border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; }
+  .sched-filter-btn { background: transparent; color: var(--muted); border: 0; border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer; min-height: 0; }
+  .sched-filter-btn.on { background: var(--accent); color: var(--accent-ink); }
+  .sched-source { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+  .sched-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin: 16px 0 6px; }
+  .sched-day {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    border-radius: 14px; padding: 9px 2px 8px; cursor: pointer; min-height: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+  }
+  .sched-day .sd-dow { font-size: 10.5px; font-weight: 800; letter-spacing: .07em; color: var(--muted); text-transform: uppercase; }
+  .sched-day .sd-num { font-size: 20px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .sched-day .sd-count { font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .sched-day.sel { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .sched-day.sel .sd-dow, .sched-day.sel .sd-count { color: var(--accent-ink); opacity: .75; }
+  .sched-day:not(.sel):hover { border-color: var(--accent); }
+  .sched-day-head { margin-top: 18px; flex-wrap: wrap; }
+  .sched-count-chip { background: var(--card); border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .sched-live { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; background: rgba(169,112,255,.13); border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 5px 13px; font-size: 12px; font-weight: 800; letter-spacing: .06em; white-space: nowrap; }
+  .live-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); animation: live-pulse 1.6s ease-in-out infinite; }
+  @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+  .sched-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 20px 16px; margin-top: 14px; }
+  .ep-chip {
+    position: absolute; top: 8px; left: 8px; z-index: 2;
+    background: rgba(8,8,10,.74); border: 1px solid rgba(255,255,255,.09);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    color: #fff; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+    padding: 3px 8px; border-radius: 8px;
+  }
+  .score-chip.tr { left: auto; right: 8px; }
+  .air-chip {
+    position: absolute; left: 8px; bottom: 8px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(8,8,10,.74); border: 1px solid rgba(255,255,255,.09);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    color: #fff; font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+    padding: 3px 8px; border-radius: 8px;
+  }
+  .air-chip svg { width: 12px; height: 12px; display: block; }
+  .air-chip.aired { color: #c9c9cf; }
+  .bm-btn.br { top: auto; bottom: 6px; }
+  .scard.notincat { cursor: default; }
+  .scard .nc-label { font-size: 11.5px; font-weight: 600; }
+  @media (max-width: 640px) {
+    .sched-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px 12px; }
+    .sched-day .sd-num { font-size: 17px; }
+    .sched-day .sd-count { font-size: 9px; }
+    .sched-controls { margin-left: 0; }
+  }
+
+  /* ---------- catalog controls (Search page) ---------- */
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 4px 0 6px; }
+  .controls input[type="search"], .controls select {
+    background: var(--bg2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 10px 16px; font-size: 15px;
+  }
+  .controls input[type="search"] { flex: 1 1 260px; min-width: 200px; }
+  .controls input[type="search"]:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+  button {
+    background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px;
+    padding: 9px 16px; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  button.secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  button.active { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button:disabled { opacity: .55; cursor: default; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+  .chip {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    border-radius: 999px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-weight: 600; min-height: 0;
+  }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 20px 16px; margin-top: 12px; }
+  .grid .pcard { width: auto; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 9px;
+    border-radius: 999px; background: var(--card2); color: var(--text);
+    border: 1px solid var(--border); white-space: nowrap;
+  }
+  .badge.ready { background: var(--ready-bg); border-color: var(--ready-bd); color: var(--ready-tx); }
+  .badge.catalog { background: var(--cat-bg); border-color: var(--cat-bd); color: var(--cat-tx); }
+  .badge.experimental { background: var(--exp-bg); border-color: var(--exp-bd); color: var(--exp-tx); }
+  .badge.subfirst { background: var(--sub-bg); border-color: var(--sub-bd); color: var(--sub-tx); }
+  .empty {
+    background: var(--bg2); border: 1px dashed var(--border); border-radius: 14px;
+    padding: 24px; color: var(--muted);
+  }
+  .more-row { display: flex; justify-content: center; margin: 26px 0 4px; }
+
+  /* ---------- detail ---------- */
+  .detail { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: 18px; }
+  .detail h2 { margin: 12px 0 6px; font-size: 26px; line-height: 1.25; }
+  .detail h3 { margin: 20px 0 8px; font-size: 18px; }
+  .meta { color: var(--muted); font-size: 14px; }
+  .meta strong { color: var(--text); }
+  .meta p { margin: 5px 0; }
+  .player-wrap { margin: 16px 0 8px; background: var(--player-bg); border-radius: 14px; overflow: hidden; min-height: 220px; }
+  .player-wrap iframe, .player-wrap video { width: 100%; height: 420px; display: block; border: 0; background: #000; }
+  .player-note { padding: 18px; color: #9aa3b2; }
+  .player-note strong { color: #e8eaf0; }
+  .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+  .toggle-row .lbl { font-size: 14px; color: var(--muted); font-weight: 600; }
+  .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 7px; margin-top: 10px; }
+  .ep-btn {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 10px; padding: 7px 4px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .ep-btn:hover { border-color: var(--accent); }
+  .ep-btn.playing { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .ep-btn.has-dub { box-shadow: inset 0 -3px 0 var(--sub-bd); }
+  .ep-legend { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  .source-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+
+  /* ---------- show detail hero (Mizuki style) ---------- */
+  .detail { padding: 0; overflow: hidden; }
+  .dhero {
+    position: relative; height: 208px; overflow: hidden;
+    background: linear-gradient(158deg, hsl(262 58% 34%) 0%, hsl(307 62% 13%) 88%);
+  }
+  .dhero img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
+  .dhero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, var(--bg2) 2%, rgba(16,16,19,.42) 52%, rgba(16,16,19,.18) 100%);
+  }
+  .dhero-top {
+    position: absolute; top: 12px; left: 14px; right: 14px; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .dhero-show {
+    color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .07em; text-transform: uppercase;
+    text-shadow: 0 1px 8px rgba(0,0,0,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .circle-btn {
+    width: 42px; height: 42px; min-height: 0; border-radius: 999px; padding: 0; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(10,10,13,.55); border: 1px solid rgba(255,255,255,.22); color: #fff; cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .circle-btn svg { width: 20px; height: 20px; display: block; }
+  .circle-btn:hover { border-color: var(--accent); }
+  .circle-btn.on { color: var(--accent); border-color: var(--accent); }
+  .circle-btn.on svg path { fill: currentColor; }
+  .detail-body { padding: 0 20px 20px; }
+  .dhead { display: flex; gap: 16px; align-items: flex-end; margin-top: -56px; position: relative; z-index: 2; }
+  .dhead .detail-poster { width: 112px; margin: 0; flex: 0 0 auto; }
+  .dhead-info { flex: 1; min-width: 0; padding-bottom: 2px; }
+  .dhead-info h2 { margin: 0 0 9px; font-size: 22px; line-height: 1.25; }
+  .dchips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .dchip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card2); border: 1px solid var(--border); color: var(--text);
+    font-size: 12.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .dchip .star { color: var(--accent); }
+  .dchip .dot { width: 8px; height: 8px; border-radius: 999px; background: #4ade80; }
+  .watch-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .watch-primary {
+    flex: 1 1 250px; display: flex; align-items: center; gap: 13px; text-align: left;
+    background: var(--accent); color: var(--accent-ink); border: 0; cursor: pointer;
+    border-radius: 14px; padding: 11px 16px;
+  }
+  .watch-primary .play-disc {
+    width: 42px; height: 42px; border-radius: 999px; flex: 0 0 auto;
+    background: var(--accent-ink); color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .watch-primary .play-disc svg { width: 18px; height: 18px; display: block; margin-left: 2px; }
+  .watch-primary .wp-main { display: block; font-size: 16px; font-weight: 800; line-height: 1.25; }
+  .watch-primary .wp-sub { display: block; font-size: 12.5px; font-weight: 600; opacity: .78; }
+  .watch-secondary { border-radius: 14px; padding: 11px 18px; font-size: 14.5px; }
+  .dtabs {
+    display: flex; gap: 4px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 4px; margin-top: 18px;
+  }
+  .dtab {
+    flex: 1; background: transparent; color: var(--muted); border: 0; border-radius: 10px;
+    padding: 9px 6px; font-size: 14px; font-weight: 700; cursor: pointer; min-height: 0;
+  }
+  .dtab.on { background: rgba(169,112,255,.17); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .dtab { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .dtab svg { width: 19px; height: 19px; display: block; }
+  .dsec { margin-top: 22px; }
+  .dsec h3 { margin: 0 0 8px; font-size: 19px; }
+  .dsec p { margin: 0; color: #c9c9cf; font-size: 14.5px; }
+  .dsec p.dim { color: var(--muted); font-size: 13.5px; }
+  .genre-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .genre-chip {
+    background: var(--card2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 999px; padding: 7px 15px; font-size: 13.5px; font-weight: 600;
+  }
+  .franchise-card {
+    position: relative; border: 1px solid var(--accent); border-radius: 14px; overflow: hidden;
+    height: 118px; cursor: pointer; background: var(--card);
+  }
+  .franchise-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; }
+  .franchise-card::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(3,3,5,.88) 0%, rgba(3,3,5,.25) 60%, rgba(3,3,5,0) 100%);
+  }
+  .franchise-current {
+    position: absolute; top: 9px; left: 9px; z-index: 1;
+    background: #f5f5f7; color: #111; font-size: 11.5px; font-weight: 800;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .franchise-title {
+    position: absolute; left: 12px; right: 12px; bottom: 9px; z-index: 1;
+    color: #fff; font-size: 14.5px; font-weight: 750; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    text-shadow: 0 1px 8px rgba(0,0,0,.6);
+  }
+  .fact-rows { display: flex; flex-direction: column; }
+  .fact-row {
+    display: flex; gap: 14px; padding: 10px 2px; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .fact-row:last-child { border-bottom: 0; }
+  .fact-row .fk { flex: 0 0 108px; color: var(--muted); font-weight: 600; }
+  .fact-row .fv { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 18px 14px; }
+  .more-grid .pcard { width: auto; }
+
+  /* ---------- episode rows ---------- */
+  .eplist { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .eprow {
+    display: flex; gap: 12px; align-items: center; width: 100%;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px; cursor: pointer;
+  }
+  .eprow:hover { border-color: var(--accent); }
+  .eprow.now { border-color: var(--accent); background: rgba(169,112,255,.07); }
+  .epthumb {
+    position: relative; width: 112px; height: 64px; border-radius: 9px; overflow: hidden; flex: 0 0 auto;
+    background: linear-gradient(158deg, hsl(var(--h, 262) 58% 38%) 0%, hsl(calc(var(--h, 262) + 45) 62% 15%) 88%);
+  }
+  .epthumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .epthumb-num {
+    position: absolute; left: 7px; bottom: 5px; z-index: 1;
+    color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-shadow: 0 1px 6px rgba(0,0,0,.8);
+  }
+  .epthumb .prog { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--accent); z-index: 1; }
+  .eprow-info { flex: 1; min-width: 0; }
+  .eprow-info h4 {
+    margin: 0 0 3px; font-size: 14.5px; font-weight: 650; line-height: 1.35; color: var(--text);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .eprow-info p { margin: 0; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .now-badge {
+    flex: 0 0 auto; background: rgba(169,112,255,.14); border: 1px solid var(--accent); color: var(--accent);
+    font-size: 10.5px; font-weight: 800; letter-spacing: .05em; padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+
+  /* ---------- episode player view (Mizuki style) ---------- */
+  .epview { margin-top: 10px; }
+  .epv-stage { position: relative; margin: 0 -18px; background: #000; }
+  .epv-stage:fullscreen { margin: 0; }
+  .epv-stage:fullscreen .player-wrap.epv-player { height: 100%; aspect-ratio: auto; }
+
+  /* ----- custom player chrome (screenshot style) ----- */
+  .vp-chrome {
+    position: absolute; inset: 0; z-index: 4;
+    display: flex; flex-direction: column; justify-content: space-between;
+    pointer-events: none; opacity: 1; transition: opacity .25s ease;
+  }
+  .vp-chrome.vp-hidden { opacity: 0; }
+  .vp-chrome.vp-hidden .vp-top, .vp-chrome.vp-hidden .vp-bottom,
+  .vp-chrome.vp-hidden .vp-center { pointer-events: none !important; }
+  .vp-top {
+    pointer-events: auto;
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px 26px;
+    background: linear-gradient(to bottom, rgba(0,0,0,.62) 0%, rgba(0,0,0,0) 100%);
+  }
+  .vp-x {
+    width: 42px; height: 42px; min-height: 0; border-radius: 999px; padding: 0; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(16,16,20,.55); border: 1px solid rgba(255,255,255,.28); color: #fff; cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .vp-x svg { width: 19px; height: 19px; display: block; }
+  .vp-x:hover { border-color: var(--accent); }
+  .vp-titles { flex: 1; min-width: 0; padding-top: 1px; }
+  .vp-ep-title {
+    font-size: 17px; font-weight: 750; line-height: 1.25; color: #fff;
+    text-shadow: 0 1px 8px rgba(0,0,0,.75);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vp-ep-sub {
+    font-size: 12.5px; color: rgba(255,255,255,.72); margin-top: 2px;
+    text-shadow: 0 1px 6px rgba(0,0,0,.75);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vp-tools {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 2px;
+    background: rgba(16,16,20,.55); border: 1px solid rgba(255,255,255,.22);
+    border-radius: 999px; padding: 5px 8px;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .vp-tool {
+    width: 34px; height: 34px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; color: #fff; cursor: pointer;
+  }
+  .vp-tool svg { width: 19px; height: 19px; display: block; }
+  .vp-tool:hover { color: var(--accent); }
+  .vp-tool.off { opacity: .45; }
+  .vp-center {
+    display: flex; align-items: center; justify-content: center; gap: 26px;
+    pointer-events: none;
+  }
+  .vp-round {
+    pointer-events: auto;
+    border-radius: 999px; padding: 0; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(14,14,18,.52); border: 1px solid rgba(255,255,255,.30); color: #fff; cursor: pointer;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    font-weight: 800;
+  }
+  .vp-round:hover { border-color: var(--accent); }
+  .vp-round svg { display: block; }
+  .vp-big { width: 76px; height: 76px; }
+  .vp-big svg { width: 30px; height: 30px; }
+  .vp-small { width: 56px; height: 56px; }
+  .vp-small svg { width: 30px; height: 30px; }
+  .vp-skip { font-size: 14px; letter-spacing: .01em; }
+  .vp-bottom {
+    pointer-events: auto;
+    padding: 26px 16px 12px;
+    background: linear-gradient(to top, rgba(0,0,0,.80) 0%, rgba(0,0,0,0) 100%);
+  }
+  .vp-progress { display: flex; align-items: center; gap: 12px; }
+  .vp-time {
+    font-size: 13px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 6px rgba(0,0,0,.8); min-width: 38px;
+  }
+  .vp-time:last-child { text-align: right; }
+  .vp-seek {
+    flex: 1; min-width: 0; -webkit-appearance: none; appearance: none;
+    height: 4px; border-radius: 999px; background: rgba(255,255,255,.28);
+    outline: none; cursor: pointer; padding: 0; min-height: 0;
+  }
+  .vp-seek::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 13px; height: 13px; border-radius: 999px; background: #fff;
+    border: 0; box-shadow: 0 1px 6px rgba(0,0,0,.6); cursor: pointer;
+  }
+  .vp-seek::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 999px; background: #fff;
+    border: 0; box-shadow: 0 1px 6px rgba(0,0,0,.6); cursor: pointer;
+  }
+  .vp-ep-name {
+    margin-top: 9px; font-size: 13.5px; color: rgba(255,255,255,.85);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vp-actions-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .vp-actions-left, .vp-actions-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .vp-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(16,16,20,.55); border: 1px solid rgba(255,255,255,.26); color: #fff;
+    border-radius: 999px; padding: 8px 16px; font-size: 13.5px; font-weight: 650;
+    cursor: pointer; min-height: 0;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .vp-pill svg { width: 16px; height: 16px; display: block; }
+  .vp-pill:hover { border-color: var(--accent); }
+  .vp-pill:disabled { opacity: .38; cursor: default; }
+  .vp-pill:disabled:hover { border-color: rgba(255,255,255,.26); }
+  .vp-iconbtn {
+    width: 42px; height: 42px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(16,16,20,.55); border: 1px solid rgba(255,255,255,.26); color: #fff; cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .vp-iconbtn svg { width: 19px; height: 19px; display: block; }
+  .vp-iconbtn:hover { border-color: var(--accent); }
+  .vp-iconbtn.on { background: rgba(169,112,255,.22); border-color: var(--accent); color: var(--accent); }
+  .vp-iconbtn.on svg path { fill: currentColor; }
+  .vp-toast {
+    position: absolute; left: 50%; bottom: 118px; transform: translateX(-50%); z-index: 5;
+    max-width: min(88%, 430px); text-align: center;
+    background: rgba(12,12,16,.88); border: 1px solid rgba(255,255,255,.20); color: #fff;
+    font-size: 13px; line-height: 1.45; border-radius: 12px; padding: 9px 14px;
+    pointer-events: none;
+  }
+  .vp-unlock {
+    position: absolute; right: 14px; bottom: 14px; z-index: 6;
+    width: 42px; height: 42px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(16,16,20,.6); border: 1px solid var(--accent); color: var(--accent); cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .vp-unlock svg { width: 19px; height: 19px; display: block; }
+  .epv-stage.vp-locked .vp-chrome { opacity: 0; pointer-events: none; }
+  /* Embedded source players render their own transport controls and cannot
+     be driven from outside the iframe. The custom chrome is removed
+     entirely in embed mode (not just faded) so no overlay, toast, or
+     show-controls button ever sits over the video and the iframe receives
+     every tap directly, including its own bottom control bar. The way
+     back in embed mode is the slim bar above the video (.epv-embed-bar),
+     which lives outside the stage and never covers it. The full custom
+     chrome only ever appears for direct-file (native) playback. */
+  .epv-stage[data-mode="embed"] .vp-chrome,
+  .epv-stage[data-mode="embed"] .vp-unlock { display: none !important; }
+  .epv-stage[data-mode="none"] .vp-chrome,
+  .epv-stage[data-mode="none"] .vp-unlock { display: none !important; }
+  .epv-embed-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 0 -18px; padding: 9px 14px;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+  }
+  .epv-embed-back {
+    display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 14px; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; min-height: 0;
+  }
+  .epv-embed-back svg { width: 16px; height: 16px; display: block; }
+  .epv-embed-back:hover { border-color: var(--accent); color: var(--accent); }
+  .epv-embed-title {
+    flex: 1; min-width: 120px; font-size: 13.5px; font-weight: 650; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .epv-embed-hint { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  @media (max-width: 640px) { .epv-embed-hint { display: none; } }
+  @media (max-width: 640px) {
+    .vp-ep-title { font-size: 14.5px; }
+    .vp-ep-sub { font-size: 11.5px; }
+    .vp-tool.hide-sm { display: none; }
+    .vp-big { width: 62px; height: 62px; }
+    .vp-big svg { width: 25px; height: 25px; }
+    .vp-small { width: 47px; height: 47px; }
+    .vp-small svg { width: 25px; height: 25px; }
+    .vp-skip { font-size: 12px; }
+    .vp-center { gap: 16px; }
+    .vp-bottom { padding: 20px 12px 10px; }
+    .vp-ep-name { display: none; }
+    .vp-pill { padding: 7px 12px; font-size: 12.5px; }
+    .vp-iconbtn { width: 38px; height: 38px; }
+    .vp-toast { bottom: 104px; }
+  }
+  .player-wrap.epv-player {
+    margin: 0; border-radius: 0; border: 0; min-height: 0;
+    aspect-ratio: 16 / 9; background: #000;
+  }
+  .player-wrap.epv-player iframe, .player-wrap.epv-player video {
+    width: 100%; height: 100%; display: block; border: 0; background: #000;
+  }
+  .player-wrap.epv-player .player-note { padding-top: 12%; }
+  .epv-title { font-size: 21px; line-height: 1.3; margin: 16px 0 3px; }
+  .epv-sub { color: var(--muted); font-size: 14px; margin: 0; }
+  .epv-controls {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    margin-top: 16px; overflow: hidden;
+  }
+  .epv-ctl {
+    padding: 11px 4px 9px; text-align: center; background: transparent; border: 0;
+    border-left: 1px solid var(--border); color: var(--text); min-height: 0; border-radius: 0;
+  }
+  .epv-ctl:first-child { border-left: 0; }
+  button.epv-ctl { cursor: pointer; }
+  button.epv-ctl:hover { color: var(--accent); }
+  .epv-ctl svg { width: 20px; height: 20px; display: block; margin: 0 auto 4px; }
+  .epv-ctl .k { display: block; font-size: 13px; font-weight: 700; }
+  .epv-ctl .v { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .epv-actions { display: flex; justify-content: space-around; gap: 6px; margin-top: 20px; }
+  .epv-act {
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    background: transparent; border: 0; color: var(--muted); font-size: 12px; font-weight: 600;
+    cursor: pointer; padding: 0; min-height: 0; border-radius: 0;
+  }
+  .epv-act .disc {
+    width: 52px; height: 52px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .epv-act svg { width: 21px; height: 21px; display: block; }
+  .epv-act:hover .disc { border-color: var(--accent); }
+  .epv-act.on { color: var(--accent); }
+  .epv-act.on .disc { background: rgba(169,112,255,.15); border-color: var(--accent); color: var(--accent); }
+  .epv-act.on .disc svg path { fill: currentColor; }
+  .epv-act:disabled { opacity: .38; cursor: default; }
+  .epv-act:disabled .disc { border-color: var(--border); }
+  .epv-head { display: flex; align-items: baseline; gap: 10px; margin-top: 26px; }
+  .epv-head h3 { margin: 0; font-size: 20px; }
+  .epv-head .tot { color: var(--muted); font-size: 13.5px; }
+  .epv-audio-label { margin-left: auto; color: var(--accent); font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+  .epv-searchrow { display: flex; gap: 10px; margin-top: 12px; }
+  .epv-search {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 999px; padding: 0 15px;
+  }
+  .epv-search svg { width: 16px; height: 16px; flex: 0 0 auto; color: var(--muted); display: block; }
+  .epv-search input {
+    flex: 1; min-width: 0; background: transparent; border: 0; color: var(--text);
+    font-size: 14.5px; padding: 10px 0; outline: none;
+  }
+  .epv-range {
+    background: var(--bg2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 10px 14px; font-size: 13.5px; font-weight: 600; white-space: nowrap;
+  }
+  select.epv-range { cursor: pointer; }
+  .epv-current { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; margin: 14px 0 0; }
+  .epv-current .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); flex: 0 0 auto; }
+  .epv-navbtns { margin-left: auto; display: inline-flex; gap: 6px; }
+  .epv-navbtn {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; min-height: 0; white-space: nowrap;
+  }
+  .epv-navbtn:hover { border-color: var(--accent); color: var(--accent); }
+  .epv-navbtn:disabled { opacity: .38; cursor: default; }
+  .epv-navbtn:disabled:hover { border-color: var(--border); color: var(--text); }
+  .epv-feedback {
+    margin-top: 14px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: #c9c9cf;
+  }
+  .epv-settings {
+    margin-top: 12px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px;
+  }
+  .epv-settings h4 { margin: 0 0 4px; font-size: 14px; }
+  .epv-settings .set-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .epv-settings .set-lbl { flex: 0 0 74px; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .epv-settings p { margin: 10px 0 0; color: var(--muted); font-size: 12.5px; }
+  .eprow-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .eprow-menu {
+    flex: 0 0 auto; width: 34px; height: 34px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; color: var(--muted); cursor: pointer;
+  }
+  .eprow-menu svg { width: 18px; height: 18px; display: block; }
+  .eprow-menu:hover { color: var(--accent); background: var(--card2); }
+  .story-clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .story-more {
+    background: none; border: 0; color: var(--accent); font-size: 14.5px; font-weight: 700;
+    padding: 6px 0 0; min-height: 0; cursor: pointer; border-radius: 0;
+  }
+  @media (max-width: 640px) {
+    section.detail { padding: 0; }
+    .dhero { height: 168px; }
+    .detail-body { padding: 0 15px 16px; }
+    .dhead .detail-poster { width: 96px; }
+    .dhead-info h2 { font-size: 19px; }
+    .epthumb { width: 96px; height: 56px; }
+    .epv-ctl .k { font-size: 12px; }
+    .epv-title { font-size: 19px; }
+  }
+
+
+  /* ---------- search & bookmarks pages ---------- */
+  /* Search and Bookmarks are their own pages, opened from the bottom
+     tab bar. Their heads match the Schedule and See All pages so all
+     four tabs feel like equal destinations. Home is just the banner
+     and rails; browsing the full catalog lives on the Search page. */
+  .tab-page-head { margin-top: 20px; }
+  .tab-page-title { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; display: flex; align-items: center; gap: 10px; }
+  .tab-page-title .tick { width: 5px; height: 26px; border-radius: 3px; background: var(--accent); flex: 0 0 auto; display: inline-block; }
+  .tab-page-sub { margin: 6px 0 0 15px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .tab-page-count { margin: 10px 0 2px; color: var(--muted); font-size: 13.5px; }
+  @media (max-width: 640px) {
+    .tab-page-title { font-size: 23px; }
+    .tab-page-sub { margin-left: 0; }
+  }
+
+  /* ---------- bottom tab bar ---------- */
+  .tabbar {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 50;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(17,17,20,.93); border: 1px solid #2b2b31; border-radius: 999px;
+    padding: 7px 10px; box-shadow: 0 12px 34px rgba(0,0,0,.55);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .tab-btn {
+    width: 46px; height: 46px; min-height: 0; border-radius: 999px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 0; color: #c9c9cf; cursor: pointer;
+  }
+  .tab-btn svg { width: 22px; height: 22px; display: block; }
+  .tab-btn:hover { color: #fff; }
+  .tab-btn.on { background: var(--accent); color: var(--accent-ink); }
+  /* The floating bar hides while scrolling down and returns on scroll
+     up (or near the top), so it never stays parked over a poster
+     bookmark or any other control near the bottom of the screen. */
+  .tabbar { transition: transform .28s ease, opacity .28s ease; }
+  .tabbar.bar-hidden {
+    transform: translate(-50%, calc(100% + 26px));
+    opacity: 0; pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) { .tabbar { transition: none; } }
+
+  .hidden { display: none !important; }
+  .loading { color: var(--muted); padding: 30px 0; font-size: 15px; }
+  @media (max-width: 640px) {
+    .player-wrap iframe, .player-wrap video { height: 250px; }
+    .detail { padding: 15px; }
+    .detail h2 { font-size: 23px; }
+    .rail .pcard, .trend-card .pcard { width: 134px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 16px 12px; }
+    .trend-num { font-size: 92px; padding-bottom: 30px; }
+    .rail-head h2 { font-size: 19px; }
+    .top-count { display: none; }
+    .tabbar { gap: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <div class="logo">Anime <b>Archive</b></div>
+    <div class="spacer"></div>
+    <span class="top-count" id="topCount">9,433 titles &middot; 6 sources</span>
+    <button type="button" class="icon-btn" id="topSearchBtn" aria-label="Search titles">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <main>
+    <section id="browseView" aria-label="Browse anime">
+      <section class="banner-ticker" id="bannerTicker" aria-label="Continue watching">
+        <div class="ticker-head">
+          <span class="tick"></span>
+          <h2>Continue Watching</h2>
+          <span class="ticker-note">Last 10 shows you watched</span>
+          <button type="button" class="ticker-shuffle hidden" id="tickerClearBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            Clear
+          </button>
+        </div>
+        <div class="cw-stage" id="cwStage">
+          <div id="cwSlides"></div>
+          <button type="button" class="cw-nav prev hidden" id="cwPrevBtn" aria-label="Previous show">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <button type="button" class="cw-nav next hidden" id="cwNextBtn" aria-label="Next show">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <div class="cw-dots hidden" id="cwDots" role="tablist" aria-label="Continue watching shows"></div>
+        </div>
+      </section>
+
+      <section class="rail-sec" id="latestSection" aria-label="Latest episodes" style="margin-top:22px;">
+        <div class="rail-head wrap">
+          <span class="tick"></span>
+          <h2>Latest Episodes</h2>
+          <span class="updated-label" id="latestUpdated">Loading latest episodes...</span>
+          <button type="button" class="see-all refresh-btn" id="latestRefreshBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Refresh
+          </button>
+          <button type="button" class="see-all" id="latestSeeAll">See All &rarr;</button>
+        </div>
+        <div class="rail" id="latestRail">
+          <p class="loading">Loading latest episodes...</p>
+        </div>
+        <div class="grid latest-grid hidden" id="latestGrid"></div>
+      </section>
+
+      <div id="rails">
+        <p class="loading">Loading the full catalog, 9,433 records. This takes a few seconds on a slow connection.</p>
+      </div>
+    </section>
+
+    <section id="searchView" class="hidden" aria-label="Search titles">
+      <div class="tab-page-head">
+        <h2 class="tab-page-title"><span class="tick"></span>Search</h2>
+        <p class="tab-page-sub">Search the full catalog by title, and narrow it down with the status, genre, and sort filters.</p>
+      </div>
+      <div class="controls" style="margin-top:16px;">
+        <input type="search" id="searchPageInput" placeholder="Search by title..." aria-label="Search by title" />
+        <select id="searchStatusFilter" aria-label="Filter by status">
+          <option value="all">All statuses</option>
+        </select>
+        <select id="searchGenreFilter" aria-label="Filter by genre">
+          <option value="all">All genres</option>
+        </select>
+        <select id="searchSortSelect" aria-label="Sort results">
+          <option value="title">Sort: Title</option>
+          <option value="score">Sort: Score</option>
+          <option value="episodes">Sort: Episodes</option>
+        </select>
+      </div>
+      <p id="searchResultCount" class="tab-page-count">Loading catalog...</p>
+      <div id="searchGrid" class="grid"></div>
+      <div class="more-row hidden" id="searchMoreRow">
+        <button type="button" id="searchMoreBtn" class="secondary">Show more titles</button>
+      </div>
+    </section>
+
+    <section id="bookmarksView" class="hidden" aria-label="Bookmarks">
+      <div class="tab-page-head">
+        <h2 class="tab-page-title"><span class="tick"></span>Bookmarks</h2>
+        <p class="tab-page-sub">Every title you saved with the bookmark button on a poster, in one place.</p>
+      </div>
+      <p id="bookmarksCount" class="tab-page-count"></p>
+      <div id="bookmarksGrid" class="grid"></div>
+    </section>
+
+    <section id="sectionView" class="hidden" aria-label="Section titles">
+      <div class="section-page-head">
+        <div class="section-back-row">
+          <button type="button" class="section-back-btn" id="sectionBackBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+            Back
+          </button>
+        </div>
+        <h2 class="section-page-title"><span class="tick"></span><span id="sectionTitle">Section</span></h2>
+        <p class="section-page-sub" id="sectionSub"></p>
+        <p class="section-page-count" id="sectionCount"></p>
+      </div>
+      <div id="sectionGrid" class="section-grid"></div>
+      <div class="more-row hidden" id="sectionMoreRow">
+        <button type="button" id="sectionMoreBtn" class="secondary">Show more titles</button>
+      </div>
+    </section>
+
+    <section id="scheduleView" class="hidden" aria-label="Release schedule">
+      <div class="sched-head">
+        <div>
+          <h2 class="sched-title">Schedule</h2>
+          <p class="sched-sub">Broadcast calendar &amp; release countdowns</p>
+        </div>
+        <div class="sched-controls">
+          <div class="sched-filter" role="group" aria-label="Schedule filter">
+            <button type="button" class="sched-filter-btn on" id="schedFilterAll">All</button>
+            <button type="button" class="sched-filter-btn" id="schedFilterMine">My List</button>
+          </div>
+          <button type="button" class="see-all refresh-btn" id="schedRefreshBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <p class="sched-source" id="schedSource">Loading this week's schedule...</p>
+      <div class="sched-days" id="schedDays" aria-label="Days of the week"></div>
+      <div class="rail-head sched-day-head">
+        <span class="tick"></span>
+        <h2 id="schedDayTitle">Today</h2>
+        <span class="sched-count-chip" id="schedDayCount"></span>
+        <span class="sched-live hidden" id="schedLive"><span class="live-dot"></span>Live Airing</span>
+      </div>
+      <div id="schedBody">
+        <p class="loading">Loading schedule...</p>
+      </div>
+    </section>
+
+    <section id="showDetail" class="detail hidden" aria-label="Show detail">
+      <div class="dhero" id="detailHero">
+        <div class="dhero-top">
+          <button type="button" id="backButton" class="circle-btn" aria-label="Back to browse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+          </button>
+          <span class="dhero-show" id="detailHeroTitle"></span>
+          <button type="button" id="detailShareBtn" class="circle-btn" aria-label="Share this title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="M8.3 10.8l6.9-4M8.3 13.2l6.9 4"/></svg>
+          </button>
+          <button type="button" id="detailSourceBtn" class="circle-btn" aria-label="Open the source watch page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M6.5 10.5L12 16l5.5-5.5"/><path d="M4 20h16"/></svg>
+          </button>
+          <button type="button" id="detailHeartBtn" class="circle-btn" aria-label="Save to watchlist">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.7C6.4 17 3 13.6 3 9.9 3 7.2 5 5 7.6 5c1.7 0 3.4.9 4.4 2.4C13 5.9 14.7 5 16.4 5 19 5 21 7.2 21 9.9c0 3.7-3.4 7.1-9 10.8z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="detail-body">
+        <div class="dhead">
+          <div id="detailPoster" class="detail-poster"></div>
+          <div class="dhead-info">
+            <h2 id="detailTitle">Loading show...</h2>
+            <div id="detailChips" class="dchips"></div>
+          </div>
+        </div>
+        <div class="watch-row">
+          <button type="button" id="watchPrimaryBtn" class="watch-primary">
+            <span class="play-disc"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg></span>
+            <span><span class="wp-main" id="watchPrimaryMain">Watch Episode 1</span><span class="wp-sub" id="watchPrimarySub">Start from the beginning</span></span>
+          </button>
+          <button type="button" id="detailWatchBtn" class="secondary watch-secondary">Add to watchlist</button>
+        </div>
+        <div class="dtabs" role="tablist" aria-label="Show sections">
+          <button type="button" class="dtab on" id="dtabOverview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+            Overview
+          </button>
+          <button type="button" class="dtab" id="dtabEpisodes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10 9.3v5.4l4.8-2.7z" fill="currentColor" stroke="none"/></svg>
+            Episodes
+          </button>
+          <button type="button" class="dtab" id="dtabDetails">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6h.01"/></svg>
+            Details
+          </button>
+          <button type="button" class="dtab" id="dtabMore">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18.5V6l10-2v11.5"/><circle cx="6.5" cy="18.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/></svg>
+            More
+          </button>
+        </div>
+        <div id="overviewPane">
+          <div class="dsec">
+            <h3>Storyline</h3>
+            <p id="storylineText">Loading...</p>
+            <button type="button" id="storylineMore" class="story-more hidden">Read more</button>
+          </div>
+          <div class="dsec">
+            <h3>Genres</h3>
+            <div id="genreChips" class="genre-chips"></div>
+          </div>
+          <div class="dsec">
+            <h3>Franchise Order</h3>
+            <div id="franchiseCard"></div>
+            <div id="alsoOnBlock"></div>
+          </div>
+        </div>
+        <div id="episodesPane" class="hidden">
+          <div class="toggle-row">
+            <span class="lbl">Audio:</span>
+            <button type="button" id="audioSubBtn" class="secondary active">Sub</button>
+            <button type="button" id="audioDubBtn" class="secondary">Dub</button>
+          </div>
+          <h3 id="epHeading">Episodes</h3>
+          <div id="episodeGrid"></div>
+          <p class="ep-legend" id="epLegend"></p>
+        </div>
+        <div id="detailsPane" class="hidden">
+          <div class="dsec" style="margin-top:14px;">
+            <div id="detailMeta" class="meta"></div>
+          </div>
+        </div>
+        <div id="morePane" class="hidden">
+          <div class="dsec" style="margin-top:14px;">
+            <h3>More Like This</h3>
+            <div id="moreGrid" class="more-grid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="episodeView" class="epview hidden" aria-label="Episode player">
+      <div class="epv-embed-bar hidden" id="vpEmbedBar">
+        <button type="button" class="epv-embed-back" id="vpEmbedBackBtn" aria-label="Close player, back to show">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+          Back
+        </button>
+        <span class="epv-embed-title" id="vpEmbedTitle"></span>
+        <span class="epv-embed-hint">Source player controls &middot; use its fullscreen button for fullscreen</span>
+      </div>
+      <div class="epv-stage" id="vpStage" data-mode="none">
+        <div id="playerArea" class="player-wrap epv-player">
+          <div class="player-note">Pick an episode below to play it.</div>
+        </div>
+        <div class="vp-chrome hidden" id="vpChrome">
+          <div class="vp-top">
+            <button type="button" id="epvBackBtn" class="vp-x" aria-label="Close player, back to show">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div class="vp-titles">
+              <div class="vp-ep-title" id="vpEpTitle">Episode</div>
+              <div class="vp-ep-sub" id="vpEpSub"></div>
+            </div>
+            <div class="vp-tools">
+              <button type="button" class="vp-tool" id="vpBtnSubs" aria-label="Subtitles">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10.5 10.2a2.4 2.4 0 1 0 0 3.6M17.5 10.2a2.4 2.4 0 1 0 0 3.6"/></svg>
+              </button>
+              <button type="button" class="vp-tool vp-native-only hide-sm" id="vpBtnCast" aria-label="Cast">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 20h.01"/></svg>
+              </button>
+              <button type="button" class="vp-tool vp-native-only" id="vpBtnVol" aria-label="Mute or unmute">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor" stroke="none"/><path d="M15.5 9.5a4 4 0 0 1 0 5M18 7a7.5 7.5 0 0 1 0 10"/></svg>
+              </button>
+              <button type="button" class="vp-tool vp-native-only hide-sm" id="vpBtnPip" aria-label="Picture in picture">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><rect x="12.5" y="12" width="6" height="4.5" rx="1" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <button type="button" class="vp-tool hide-sm" id="vpBtnReport" aria-label="Playback help">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="4.6"/><path d="M12 8.9V5.5M9.2 6.2L7.2 4M14.8 6.2L16.8 4M7.4 12.5H3.8M7.8 16.2l-3 1.8M16.6 12.5h3.6M16.2 16.2l3 1.8"/></svg>
+              </button>
+              <button type="button" class="vp-tool" id="vpBtnSettings" aria-label="Player settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09c0 .68.4 1.3 1 1.55.61.26 1.32.1 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01c.26.6.87 1 1.55 1H21a2 2 0 1 1 0 4h-.09c-.68 0-1.3.4-1.51 1z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="vp-center" id="vpCenter">
+            <button type="button" class="vp-round vp-small" id="vpBtnBack10" aria-label="Back 10 seconds">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1.8L6.8 6 12 10.2V7a5 5 0 1 1-5 5H4.8A7.2 7.2 0 1 0 12 5z"/><text x="12" y="16.4" font-size="6.4" font-weight="800" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>
+            </button>
+            <button type="button" class="vp-round vp-big" id="vpBtnPlay" aria-label="Play or pause">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5h3.6v14H7.5zM12.9 5h3.6v14h-3.6z"/></svg>
+            </button>
+            <button type="button" class="vp-round vp-small" id="vpBtnFwd10" aria-label="Forward 10 seconds">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1.8L17.2 6 12 10.2V7a5 5 0 1 0 5 5h2.2A7.2 7.2 0 1 1 12 5z"/><text x="12" y="16.4" font-size="6.4" font-weight="800" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>
+            </button>
+            <button type="button" class="vp-round vp-small vp-skip" id="vpBtnSkip85" aria-label="Skip ahead 85 seconds">+85s</button>
+          </div>
+          <div class="vp-bottom">
+            <div class="vp-progress" id="vpProgressRow">
+              <span class="vp-time" id="vpCur">00:00</span>
+              <input type="range" class="vp-seek" id="vpSeek" min="0" max="1000" value="0" step="1" aria-label="Seek" />
+              <span class="vp-time" id="vpDur">00:00</span>
+            </div>
+            <div class="vp-ep-name" id="vpEpName"></div>
+            <div class="vp-actions-row">
+              <div class="vp-actions-left">
+                <button type="button" class="vp-pill" id="vpBtnEpisodes">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8.5 6h12M8.5 12h12M8.5 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg>
+                  Episodes
+                </button>
+                <button type="button" class="vp-pill" id="vpBtnPrev">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.2v14H6zM19 5.8v12.4L9.5 12z"/></svg>
+                  Previous
+                </button>
+                <button type="button" class="vp-pill" id="vpBtnNext">
+                  Next
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.8 5H18v14h-2.2zM5 5.8v12.4L14.5 12z"/></svg>
+                </button>
+              </div>
+              <div class="vp-actions-right">
+                <button type="button" class="vp-iconbtn" id="vpBtnCC" aria-label="Captions">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10.5 10.2a2.4 2.4 0 1 0 0 3.6M17.5 10.2a2.4 2.4 0 1 0 0 3.6"/></svg>
+                </button>
+                <button type="button" class="vp-iconbtn" id="vpBtnComments" aria-label="Comments">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-3-.4-4.2-1.1L3 20l1.1-5.3A8.5 8.5 0 1 1 21 11.5z"/></svg>
+                </button>
+                <button type="button" class="vp-iconbtn" id="vpBtnSave" aria-label="Save to watchlist">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+                </button>
+                <button type="button" class="vp-iconbtn" id="vpBtnLock" aria-label="Lock player controls">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.8v1.7"/></svg>
+                </button>
+                <button type="button" class="vp-iconbtn" id="vpBtnFs" aria-label="Fullscreen">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="vp-toast hidden" id="vpToast" role="status"></div>
+        </div>
+        <button type="button" class="vp-unlock hidden" id="vpUnlockBtn" aria-label="Unlock player controls">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 7.8-1.3"/><path d="M12 14.8v1.7"/></svg>
+        </button>
+        <button type="button" class="vp-unlock hidden" id="vpShowBtn" aria-label="Show player controls">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 14.5l7-6.5 7 6.5"/></svg>
+        </button>
+      </div>
+      <h2 id="epvTitle" class="epv-title">Episode</h2>
+      <p class="epv-sub" id="epvSub"></p>
+      <p id="playerNote" class="meta"></p>
+      <div class="epv-controls">
+        <div class="epv-ctl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+          <span class="k">Source</span><span class="v" id="epvCtlSource">Auto</span>
+        </div>
+        <div class="epv-ctl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15v-6M7 12h4M11 9v6M14 15v-6h2.5a2.5 2.5 0 0 1 0 5H14"/></svg>
+          <span class="k">Quality</span><span class="v">1080p</span>
+        </div>
+        <button type="button" class="epv-ctl" id="epvCtlAudio" aria-label="Toggle sub or dub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>
+          <span class="k">Audio</span><span class="v" id="epvCtlAudioVal">Japanese</span>
+        </button>
+        <button type="button" class="epv-ctl" id="epvCtlMore" aria-label="Player settings" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          <span class="k">More</span><span class="v">Settings</span>
+        </button>
+      </div>
+      <div class="epv-settings hidden" id="epvSettings">
+        <h4>Player settings</h4>
+        <div class="set-row">
+          <span class="set-lbl">Audio</span>
+          <button type="button" id="epvSetSub" class="secondary active">Sub &middot; Japanese</button>
+          <button type="button" id="epvSetDub" class="secondary">Dub &middot; English</button>
+        </div>
+        <div class="set-row">
+          <span class="set-lbl">Source</span>
+          <button type="button" id="epvSetSource" class="secondary">Open source page</button>
+        </div>
+        <p>Quality is set by the source player (1080p where the source offers it). Switching audio reloads the episode with that track where one exists.</p>
+      </div>
+      <div class="epv-actions">
+        <button type="button" class="epv-act" id="epvCommentsBtn" aria-expanded="false">
+          <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-3-.4-4.2-1.1L3 20l1.1-5.3A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+          Comments
+        </button>
+        <button type="button" class="epv-act" id="epvShareBtn">
+          <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="M8.3 10.8l6.9-4M8.3 13.2l6.9 4"/></svg></span>
+          <span id="epvShareLabel">Share</span>
+        </button>
+        <button type="button" class="epv-act" id="epvDownloadBtn">
+          <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M6.5 10.5L12 16l5.5-5.5"/><path d="M4 20h16"/></svg></span>
+          Download
+        </button>
+        <button type="button" class="epv-act" id="epvSaveBtn">
+          <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></span>
+          Save
+        </button>
+      </div>
+      <div class="epv-feedback hidden" id="epvFeedback" role="status"></div>
+      <div class="epv-head">
+        <h3>Episodes</h3>
+        <span class="tot" id="epvTotal"></span>
+        <span class="epv-audio-label" id="epvAudioLabel">SUB</span>
+      </div>
+      <div class="epv-searchrow">
+        <label class="epv-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+          <input type="search" id="epvSearchInput" placeholder="Search episodes" aria-label="Search episodes" />
+        </label>
+        <select id="epvRangeSelect" class="epv-range hidden" aria-label="Episode range"></select>
+        <span id="epvRangeLabel" class="epv-range hidden"></span>
+      </div>
+      <p class="epv-current"><span class="dot"></span><span id="epvCurrentLabel"></span><span class="epv-navbtns"><button type="button" class="epv-navbtn" id="epvPrevBtn">&lsaquo; Prev</button><button type="button" class="epv-navbtn" id="epvNextBtn">Next &rsaquo;</button></span></p>
+      <div id="epvList" class="eplist"></div>
+    </section>
+  </main>
+
+</div>
+
+<nav class="tabbar" aria-label="Main">
+  <button type="button" class="tab-btn on" id="tabHome" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+  </button>
+  <button type="button" class="tab-btn" id="tabSearch" aria-label="Search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+  </button>
+  <button type="button" class="tab-btn" id="tabWatchlist" aria-label="Bookmarks">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+  </button>
+  <button type="button" class="tab-btn" id="tabSchedule" aria-label="Schedule">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>
+  </button>
+</nav>
+
+<script>
+(function () {
+  "use strict";
+
+  var PROVIDER_STATUS = {
+    anikoto: { label: "Stream ready", cls: "ready", note: "This title is stream ready." },
+    animegg: { label: "Stream ready", cls: "ready", note: "This title is stream ready." },
+    anineko: { label: "Stream ready, sub first", cls: "subfirst", note: "This title is stream ready, sub first, dub uncertain." },
+    animeheaven: { label: "Catalog only", cls: "catalog", note: "This title is catalog only, no stream available yet." },
+    mkissa: { label: "Experimental", cls: "experimental", note: "This title is experimental, no stream available yet." },
+    "2dhive": { label: "Catalog only", cls: "catalog", note: "This title is catalog only, no stream available yet." }
+  };
+  var CATALOG_ONLY = { animeheaven: true, "2dhive": true };
+  var EXPERIMENTAL = { mkissa: true };
+  var PAGE = 120;
+
+  var catalog = [];
+  var posters = {};           // AniKoto provider id -> poster URL
+  var postersExtra = {};      // "provider_id" key -> poster URL (non-AniKoto)
+  var shardIndex = null;      // key -> shard number
+  var shardCache = {};        // shard number -> data
+  var pilotData = null;       // key -> compact show
+  var showCache = {};         // key -> compact show
+  var watchlist = {};         // in-memory only, key -> true
+  var latestItems = [];       // latest episode updates (saved snapshot, assets/data/latest.json)
+  var latestFetchedAt = null; // ISO string: when the current list was fetched
+  var latestExpanded = false;
+  var latestLoading = false;  // a loadLatest() run is in flight
+  var catalogPromise = null;  // resolves once assets/data/catalog.json has loaded
+  var currentSectionPreset = null;
+  var currentSectionItems = [];
+  var currentSectionKind = "catalog"; // "catalog" | "latest"
+  var sectionShown = 120;
+  var state = {
+    query: "", status: "all", genre: "all", sort: "title",
+    watchlistOnly: false, shown: PAGE,
+    currentKey: null, currentEntry: null, currentShow: null,
+    currentEpisode: null, audio: "sub",
+    epvQuery: "", epvRange: 0, primaryEp: null, detailTab: "overview",
+    watched: {}, /* show key -> { episode number: true }; saved on this device with the Continue Watching list */
+    watchHistory: [], /* newest first: { key, p, id, t, ep, at }, one entry per show, capped at 10; restored from this device on load */
+    pendingResumeKey: null, pendingResumeEp: null
+  };
+  /* The Search tab page owns browsing the full catalog, with its own
+     query and filters in searchState. */
+  var searchState = {
+    query: "", status: "all", genre: "all", sort: "title", shown: PAGE
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function keyOf(p, id) { return p + "_" + String(id); }
+  function escapeHtml(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function fetchJson(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) { throw new Error("Fetch failed " + r.status + " " + url); }
+      return r.json();
+    });
+  }
+  function formatScore(sc) { return sc == null ? "No score" : "Score " + Number(sc).toFixed(1); }
+  function formatEpisodes(ep) { return ep == null ? "Episodes unknown" : ep + (ep === 1 ? " episode" : " episodes"); }
+  function hueFor(str) {
+    var h = 0, s = String(str || "");
+    for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 360; }
+    /* Keep fallback tiles in the cool family (blue through violet to
+       magenta, 205-300) so no tile ever renders red, orange, or amber,
+       even at the gradient's second stop (+45 hue). */
+    return 205 + (h % 96);
+  }
+  var BOOKMARK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>';
+
+  /* ---------- cover art ---------- */
+  /* Posters are hotlinked from cdn.anipixcdn.co (the poster field the
+     AniKoto API returns); no image files are stored locally. The colored
+     typographic tile stays underneath every poster: if an image fails to
+     load, onerror removes the <img> and the tile shows instead. */
+
+  function posterFor(item) {
+    if (!item) { return null; }
+    if (item.p === "anikoto") { return posters[String(item.id)] || null; }
+    return postersExtra[keyOf(item.p, item.id)] || null;
+  }
+
+  function posterImgHtml(item) {
+    var url = posterFor(item);
+    if (!url) { return ""; }
+    return '<img class="poster-img" src="' + escapeHtml(url) + '" alt="" loading="lazy" ' +
+      'onerror="this.parentNode.classList.remove(\'has-art\'); this.remove();">';
+  }
+
+  function detailPosterHtml(entry) {
+    var title = entry.t || "Untitled";
+    var initial = title.replace(/^[^A-Za-z0-9]+/, "").charAt(0).toUpperCase() || "A";
+    var url = posterFor(entry);
+    return '<div class="poster' + (url ? " has-art" : "") + '" style="--h:' +
+      hueFor(title + entry.p) + '" data-initial="' + escapeHtml(initial) + '">' +
+      posterImgHtml(entry) +
+      '<div class="poster-title">' + escapeHtml(title) + "</div></div>";
+  }
+
+  function renderDetailPoster() {
+    var el = $("detailPoster");
+    if (!el || !state.currentEntry) { return; }
+    el.innerHTML = detailPosterHtml(state.currentEntry);
+  }
+
+  function loadPosters() {
+    return Promise.all([
+      fetchJson("assets/data/posters.json").catch(function () { return {}; }),
+      fetchJson("assets/data/posters_non_anikoto.json").catch(function () { return {}; })
+    ]).then(function (results) {
+      posters = results[0] || {};
+      postersExtra = results[1] || {};
+      renderBannerTicker();
+      if (latestItems.length) { renderLatest(); }
+      if (catalog.length) {
+        renderRails();
+        renderGrid();
+        renderSearchGrid();
+        renderBookmarks();
+        if (currentSectionPreset && !$("sectionView").classList.contains("hidden")) {
+          currentSectionItems = sectionItemsFor(currentSectionPreset);
+          renderSectionGrid();
+        }
+        if (state.currentEntry && !$("showDetail").classList.contains("hidden")) {
+          renderDetailPoster();
+        }
+      }
+    });
+  }
+
+  /* ---------- synopsis / genre metadata ---------- */
+  /* Real per-title metadata pulled from the AniKoto API at build time:
+     assets/data/metadata.json (AniKoto id -> record) and
+     assets/data/metadata_non_anikoto.json ("provider_id" -> record). Each
+     record carries description, genres, studios, type, season, year.
+     Loaded lazily the first time a show page opens, so the home page
+     never pays for the 6.8 MB file. AniKoto list fields arrive as
+     stringified lists ("['Action', 'Fantasy']"); the non-AniKoto file
+     carries real arrays. parseListField handles both. */
+
+  var metaCache = null, metaExtraCache = null, metaPromise = null;
+
+  function loadMetadata() {
+    if (metaPromise) { return metaPromise; }
+    metaPromise = Promise.all([
+      fetchJson("assets/data/metadata.json").catch(function () { return {}; }),
+      fetchJson("assets/data/metadata_non_anikoto.json").catch(function () { return {}; })
+    ]).then(function (results) {
+      metaCache = results[0] || {};
+      metaExtraCache = results[1] || {};
+      return true;
+    });
+    return metaPromise;
+  }
+
+  function parseListField(v) {
+    if (Array.isArray(v)) { return v.map(function (x) { return String(x).trim(); }).filter(Boolean); }
+    if (typeof v === "string") {
+      var s = v.trim();
+      if (s.charAt(0) === "[") {
+        return s.replace(/^\[|\]$/g, "").split(",")
+          .map(function (x) { return x.trim().replace(/^['"]|['"]$/g, ""); })
+          .filter(Boolean);
+      }
+      return s ? [s] : [];
+    }
+    return [];
+  }
+
+  function metaFor(entry) {
+    if (!entry) { return null; }
+    var raw = entry.p === "anikoto"
+      ? (metaCache ? metaCache[String(entry.id)] : null)
+      : (metaExtraCache ? metaExtraCache[keyOf(entry.p, entry.id)] : null);
+    if (!raw) { return null; }
+    return {
+      description: raw.description ? String(raw.description).trim() : "",
+      genres: parseListField(raw.genres),
+      studios: parseListField(raw.studios),
+      type: parseListField(raw.type),
+      season: raw.season ? String(raw.season) : "",
+      year: raw.year ? String(raw.year) : ""
+    };
+  }
+
+  function seasonLabel(meta) {
+    if (!meta || !meta.season) { return ""; }
+    var s = meta.season.charAt(0).toUpperCase() + meta.season.slice(1).toLowerCase();
+    return meta.year ? s + " " + meta.year : s;
+  }
+
+  /* ---------- poster cards ---------- */
+
+  function posterCard(item) {
+    var key = keyOf(item.p, item.id);
+    var title = item.t || "Untitled";
+    var initial = title.replace(/^[^A-Za-z0-9]+/, "").charAt(0).toUpperCase() || "A";
+    var chip = item.sc == null ? "" :
+      '<span class="score-chip"><span class="star">&#9733;</span>' + Number(item.sc).toFixed(1) + "</span>";
+    var meta = formatEpisodes(item.ep).replace(" episodes", " eps").replace(" episode", " ep");
+    var url = posterFor(item);
+    return '<article class="pcard" data-key="' + escapeHtml(key) + '">' +
+      '<div class="poster' + (url ? " has-art" : "") + '" style="--h:' + hueFor(title + item.p) + '" data-initial="' + escapeHtml(initial) + '">' +
+      posterImgHtml(item) +
+      chip +
+      '<button type="button" class="bm-btn' + (watchlist[key] ? " in-list" : "") + '" data-key="' + escapeHtml(key) +
+      '" aria-label="' + (watchlist[key] ? "Remove from watchlist" : "Add to watchlist") + '">' + BOOKMARK_SVG + "</button>" +
+      '<div class="poster-title">' + escapeHtml(title) + "</div>" +
+      "</div>" +
+      "<h3>" + escapeHtml(title) + "</h3>" +
+      '<p class="pmeta">' + meta + "</p>" +
+      "</article>";
+  }
+
+  function wireCards(scope) {
+    scope.querySelectorAll(".pcard, .trend-card").forEach(function (card) {
+      card.addEventListener("click", function (ev) {
+        if (ev.target && ev.target.closest && ev.target.closest(".bm-btn")) { return; }
+        openShow(card.getAttribute("data-key"));
+      });
+    });
+    scope.querySelectorAll(".bm-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var k = btn.getAttribute("data-key");
+        if (watchlist[k]) { delete watchlist[k]; } else { watchlist[k] = true; }
+        syncWatchlistUi();
+        if (state.currentKey === k) { syncDetailWatchBtn(); }
+      });
+    });
+  }
+
+  function syncWatchlistUi() {
+    document.querySelectorAll(".bm-btn").forEach(function (btn) {
+      var on = !!watchlist[btn.getAttribute("data-key")];
+      btn.classList.toggle("in-list", on);
+      btn.setAttribute("aria-label", on ? "Remove from watchlist" : "Add to watchlist");
+    });
+    if (state.watchlistOnly) { renderGrid(); }
+    var bmView = $("bookmarksView");
+    if (bmView && !bmView.classList.contains("hidden")) { renderBookmarks(); }
+  }
+
+  /* ---------- latest episodes ---------- */
+  /* The rail is snapshot-driven: assets/data/latest.json is a dated
+     snapshot of the AniKoto API /recent-anime feed, refreshed by
+     rebuilding the app (an hourly background rebuild checks the feed
+     and republishes when it has new episodes). Live in-browser
+     updates were tried twice and abandoned: the AniKoto API sends
+     no CORS headers so a browser cannot read it at all, and the
+     AniList and Jikan live calls are blocked from the app's network
+     too (their block/error responses also lack CORS headers, so the
+     requests died silently and Refresh just reported failure).
+     Every snapshot item is an AniKoto catalog title, so each card
+     opens a real show page here. Launch and Refresh both re-read
+     the snapshot file with no-store, so a fresher snapshot from a
+     rebuild is picked up without a cached copy masking it, and the
+     Updated stamp always shows the snapshot's real fetch time. */
+
+  function parseUpd(s) {
+    if (!s) { return null; }
+    var iso = String(s).trim().replace(" ", "T");
+    if (!/(Z|[+-]\d{2}:?\d{2})$/.test(iso)) { iso += "Z"; }
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function relativeTime(s) {
+    var d = parseUpd(s);
+    if (!d) { return ""; }
+    var mins = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
+    if (mins < 1) { return "just now"; }
+    if (mins < 60) { return mins + "m ago"; }
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) { return hrs + "h ago"; }
+    var days = Math.floor(hrs / 24);
+    if (days < 7) { return days + (days === 1 ? " day ago" : " days ago"); }
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function latestCard(item) {
+    var key = keyOf(item.p || "anikoto", item.id);
+    var title = item.t || "Untitled";
+    var initial = title.replace(/^[^A-Za-z0-9]+/, "").charAt(0).toUpperCase() || "A";
+    var chip = item.sc == null ? "" :
+      '<span class="score-chip"><span class="star">&#9733;</span>' + Number(item.sc).toFixed(1) + "</span>";
+    var rel = relativeTime(item.upd);
+    /* An item with no timestamp or audio split (noAudio) shows just
+       the episode number rather than a guessed time or audio track.
+       Current snapshot items always carry both. */
+    var metaParts = ["Episode " + item.ep];
+    if (rel) { metaParts.push(escapeHtml(rel)); }
+    if (!item.noAudio) { metaParts.push(item.dub ? "Sub + Dub" : "Sub"); }
+    var meta = metaParts.join(" &middot; ");
+    var url = item.poster || posterFor({ p: item.p || "anikoto", id: item.id });
+    var img = url
+      ? '<img class="poster-img" src="' + escapeHtml(url) + '" alt="" loading="lazy" ' +
+        'onerror="this.parentNode.classList.remove(\'has-art\'); this.remove();">'
+      : "";
+    return '<article class="pcard" data-key="' + escapeHtml(key) + '">' +
+      '<div class="poster' + (url ? " has-art" : "") + '" style="--h:' + hueFor(title + (item.p || "anikoto")) + '" data-initial="' + escapeHtml(initial) + '">' +
+      img + chip +
+      '<span class="ep-badge">EP ' + item.ep + "</span>" +
+      '<button type="button" class="bm-btn' + (watchlist[key] ? " in-list" : "") + '" data-key="' + escapeHtml(key) +
+      '" aria-label="' + (watchlist[key] ? "Remove from watchlist" : "Add to watchlist") + '">' + BOOKMARK_SVG + "</button>" +
+      '<div class="poster-title">' + escapeHtml(title) + "</div>" +
+      "</div>" +
+      "<h3>" + escapeHtml(title) + "</h3>" +
+      '<p class="pmeta">' + meta + "</p>" +
+      "</article>";
+  }
+
+  /* ---------- continue watching banner ---------- */
+  /* The banner at the top is Continue Watching, styled after the
+     Mizuki hero: the last 10 shows the reader played an episode of,
+     newest first, one full-width banner slide per show carrying the
+     most recent episode watched for it. Each slide shows the show's
+     poster as backdrop art, a CONTINUE WATCHING pill with the
+     episode and watched-ago time, the title, score / episode-count /
+     status meta from the catalog, and a white Resume button.
+     Slides cross-fade and auto-advance every 6.5s (paused on hover
+     or focus, off under prefers-reduced-motion); the progress dots,
+     side arrows, and swipe move between shows. History is recorded
+     in playEpisode (recordWatchHistory) and saved on this device
+     (see the persistence block below), so the last 10 are still
+     here after a reload. The Resume button resumes that episode
+     (resumeContinue); the X on a slide removes just that show, and
+     Clear in the header empties the whole list. */
+
+  var TICKER_X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var TICKER_PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.3v13.4L18.6 12z"/></svg>';
+
+  /* ----- Continue Watching persistence (this device) -----
+     The list and the watched-episode map are kept in the browser's
+     local storage under one key, so they survive reloads on this
+     device. Storage can be unavailable (private browsing, a blocked
+     or full store, a sandboxed frame): every access is guarded, and
+     any failure simply falls back to in-memory behavior for the
+     visit instead of breaking playback or the ticker. Only the
+     fields the ticker and the Continue button need are stored:
+     show key, provider, id, title, last episode, and timestamp. */
+  var CW_STORAGE_KEY = "anime-archive:continue-watching:v1";
+
+  function saveWatchHistory() {
+    try {
+      var store = window.localStorage;
+      if (!store) { return; }
+      store.setItem(CW_STORAGE_KEY, JSON.stringify({
+        history: state.watchHistory.slice(0, 10),
+        watched: state.watched
+      }));
+    } catch (err) { /* storage unavailable: keep the in-memory list */ }
+  }
+
+  function loadWatchHistory() {
+    var raw = null;
+    try {
+      var store = window.localStorage;
+      if (!store) { return; }
+      raw = store.getItem(CW_STORAGE_KEY);
+    } catch (err) { return; }
+    if (!raw) { return; }
+    var data = null;
+    try { data = JSON.parse(raw); } catch (err) { return; }
+    if (!data || !Array.isArray(data.history)) { return; }
+    var seenKeys = {};
+    var history = [];
+    data.history.forEach(function (h) {
+      if (!h || typeof h !== "object") { return; }
+      if (!h.key || !h.p || h.id == null || seenKeys[h.key]) { return; }
+      var ep = Number(h.ep);
+      if (!isFinite(ep) || ep < 1) { return; }
+      var at = Number(h.at);
+      seenKeys[h.key] = true;
+      history.push({
+        key: String(h.key), p: String(h.p), id: h.id,
+        t: h.t ? String(h.t) : "Untitled",
+        ep: Math.floor(ep), at: isFinite(at) && at > 0 ? at : Date.now()
+      });
+    });
+    history.sort(function (a, b) { return b.at - a.at; });
+    state.watchHistory = history.slice(0, 10);
+    /* Restore the watched-episode map so episode progress bars and
+       the show page's Continue Episode button pick up where the
+       reader left off. Entries are validated to plain
+       { showKey: { epNumber: true } } shape; anything else is dropped.
+       Every history entry also marks its episode watched, so a save
+       written before the map was stored still resumes correctly. */
+    var watched = {};
+    if (data.watched && typeof data.watched === "object" && !Array.isArray(data.watched)) {
+      Object.keys(data.watched).forEach(function (k) {
+        var eps = data.watched[k];
+        if (!eps || typeof eps !== "object" || Array.isArray(eps)) { return; }
+        var clean = {};
+        Object.keys(eps).forEach(function (n) {
+          var num = Number(n);
+          if (eps[n] && isFinite(num) && num >= 1) { clean[Math.floor(num)] = true; }
+        });
+        if (Object.keys(clean).length) { watched[k] = clean; }
+      });
+    }
+    state.watchHistory.forEach(function (h) {
+      if (!watched[h.key]) { watched[h.key] = {}; }
+      watched[h.key][h.ep] = true;
+    });
+    state.watched = watched;
+  }
+
+  function clearWatchHistory() {
+    /* Empties the ticker list only. The watched-episode map is kept,
+       so a show page still offers its Continue Episode where the
+       reader left off; playing any episode adds the show back here. */
+    state.watchHistory = [];
+    saveWatchHistory();
+    renderBannerTicker();
+  }
+
+  function watchedAgo(ts) {
+    if (!ts) { return ""; }
+    var mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+    if (mins < 1) { return "just now"; }
+    if (mins < 60) { return mins + "m ago"; }
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) { return hrs + "h ago"; }
+    var days = Math.floor(hrs / 24);
+    return days + (days === 1 ? " day ago" : " days ago");
+  }
+
+  function recordWatchHistory(num) {
+    var entry = state.currentEntry;
+    if (!entry || !state.currentKey) { return; }
+    var item = {
+      key: state.currentKey, p: entry.p, id: entry.id,
+      t: entry.t || "Untitled", ep: num, at: Date.now()
+    };
+    state.watchHistory = state.watchHistory.filter(function (h) { return h.key !== item.key; });
+    state.watchHistory.unshift(item);
+    if (state.watchHistory.length > 10) { state.watchHistory.length = 10; }
+    cwIndex = 0; /* the just-watched show leads the banner */
+    saveWatchHistory();
+    renderBannerTicker();
+  }
+
+  function removeFromHistory(key) {
+    state.watchHistory = state.watchHistory.filter(function (h) { return h.key !== key; });
+    saveWatchHistory();
+    renderBannerTicker();
+  }
+
+  function resumeContinue(key, ep) {
+    state.pendingResumeKey = key;
+    state.pendingResumeEp = ep;
+    openShow(key);
+  }
+
+  /* ----- banner carousel state ----- */
+  var cwIndex = 0;
+  var cwTimer = null;
+
+  function cwReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  function cwStopAuto() {
+    if (cwTimer) { clearInterval(cwTimer); cwTimer = null; }
+  }
+
+  function cwStartAuto() {
+    cwStopAuto();
+    if (state.watchHistory.length < 2 || cwReducedMotion()) { return; }
+    cwTimer = setInterval(function () { cwGo(cwIndex + 1, false); }, 6500);
+  }
+
+  function cwGo(i, manual) {
+    var n = state.watchHistory.length;
+    if (!n) { return; }
+    cwIndex = ((i % n) + n) % n;
+    var slidesEl = $("cwSlides"), dotsEl = $("cwDots");
+    if (slidesEl) {
+      Array.prototype.forEach.call(slidesEl.children, function (el, idx) {
+        el.classList.toggle("on", idx === cwIndex);
+      });
+    }
+    if (dotsEl) {
+      Array.prototype.forEach.call(dotsEl.children, function (el, idx) {
+        el.classList.toggle("on", idx === cwIndex);
+        el.setAttribute("aria-selected", idx === cwIndex ? "true" : "false");
+      });
+    }
+    if (manual) { cwStartAuto(); } /* restart the clock after a manual move */
+  }
+
+  function catalogEntryFor(key) {
+    var found = null;
+    catalog.forEach(function (e) { if (keyOf(e.p, e.id) === key) { found = e; } });
+    return found;
+  }
+
+  function continueSlide(item, active) {
+    var title = item.t || "Untitled";
+    var when = watchedAgo(item.at);
+    var entry = catalogEntryFor(item.key);
+    var pill = "Continue Watching \u2022 EP " + item.ep + (when ? " \u2022 Watched " + when : "");
+    var url = posterFor({ p: item.p, id: item.id });
+    var img = url
+      ? '<img class="cw-bg" src="' + escapeHtml(url) + '" alt="" loading="lazy" ' +
+        'onerror="this.remove();">'
+      : "";
+    var metaParts = [];
+    if (entry && entry.sc != null) {
+      metaParts.push('<span class="cw-score"><span class="star">&#9733;</span>' + Number(entry.sc).toFixed(1) + "</span>");
+    }
+    if (entry && entry.ep != null) {
+      metaParts.push("<span>" + entry.ep + (entry.ep === 1 ? " Ep" : " Eps") + "</span>");
+    }
+    if (entry && entry.st) {
+      metaParts.push("<span>" + escapeHtml(entry.st === "Currently Airing" ? "Releasing" : entry.st) + "</span>");
+    }
+    metaParts.push("<span>Episode " + item.ep + " up next</span>");
+    return '<article class="cw-slide' + (active ? " on" : "") + '" data-key="' + escapeHtml(item.key) + '" data-ep="' + item.ep +
+      '" style="--h:' + hueFor(title + item.p) + '">' +
+      img +
+      '<div class="cw-shade"></div>' +
+      '<button type="button" class="cw-remove" data-remove-key="' + escapeHtml(item.key) +
+      '" aria-label="Remove ' + escapeHtml(title) + ' from Continue Watching">' + TICKER_X_SVG + "</button>" +
+      '<div class="cw-info">' +
+      '<span class="cw-pill"><span class="dot"></span>' + escapeHtml(pill) + "</span>" +
+      "<h3>" + escapeHtml(title) + "</h3>" +
+      '<div class="cw-meta">' + metaParts.join('<span class="sep">&middot;</span>') + "</div>" +
+      '<button type="button" class="cw-resume" data-resume-key="' + escapeHtml(item.key) + '" data-resume-ep="' + item.ep + '">' +
+      TICKER_PLAY_SVG + "<span>Resume Episode " + item.ep + "</span></button>" +
+      "</div>" +
+      "</article>";
+  }
+
+  function renderBannerTicker() {
+    var section = $("bannerTicker"), slidesEl = $("cwSlides");
+    if (!section || !slidesEl) { return; }
+    var clearBtn = $("tickerClearBtn");
+    var dotsEl = $("cwDots"), prevBtn = $("cwPrevBtn"), nextBtn = $("cwNextBtn");
+    var stage = $("cwStage");
+    var history = state.watchHistory.slice(0, 10);
+    section.classList.remove("is-empty");
+    if (!history.length) {
+      cwStopAuto();
+      if (clearBtn) { clearBtn.classList.add("hidden"); }
+      if (dotsEl) { dotsEl.classList.add("hidden"); dotsEl.innerHTML = ""; }
+      if (prevBtn) { prevBtn.classList.add("hidden"); }
+      if (nextBtn) { nextBtn.classList.add("hidden"); }
+      if (stage) { stage.classList.add("hidden"); }
+      var emptyEl = $("cwEmpty");
+      if (!emptyEl) {
+        emptyEl = document.createElement("div");
+        emptyEl.id = "cwEmpty";
+        emptyEl.className = "cw-empty";
+        section.appendChild(emptyEl);
+      }
+      emptyEl.classList.remove("hidden");
+      emptyEl.innerHTML =
+        '<span class="cw-pill"><span class="dot"></span>Continue Watching</span>' +
+        '<p class="cw-empty-msg">Nothing here yet. Play any episode and the last 10 shows you watch will appear here as banners like this one, newest first, saved on this device so they are still here when you come back.</p>';
+      return;
+    }
+    var emptyEl2 = $("cwEmpty");
+    if (emptyEl2) { emptyEl2.classList.add("hidden"); }
+    if (stage) { stage.classList.remove("hidden"); }
+    if (clearBtn) { clearBtn.classList.remove("hidden"); }
+    if (cwIndex >= history.length) { cwIndex = 0; }
+    if (cwIndex < 0) { cwIndex = 0; }
+    slidesEl.innerHTML = history.map(function (item, idx) { return continueSlide(item, idx === cwIndex); }).join("");
+    var multi = history.length > 1;
+    if (dotsEl) {
+      dotsEl.classList.toggle("hidden", !multi);
+      dotsEl.innerHTML = history.map(function (item, idx) {
+        return '<button type="button" role="tab" class="cw-dot' + (idx === cwIndex ? " on" : "") +
+          '" data-cw-dot="' + idx + '" aria-selected="' + (idx === cwIndex ? "true" : "false") +
+          '" aria-label="Show ' + escapeHtml(item.t || "Untitled") + '"></button>';
+      }).join("");
+      dotsEl.querySelectorAll(".cw-dot").forEach(function (dot) {
+        dot.addEventListener("click", function () { cwGo(Number(dot.getAttribute("data-cw-dot")), true); });
+      });
+    }
+    if (prevBtn) { prevBtn.classList.toggle("hidden", !multi); }
+    if (nextBtn) { nextBtn.classList.toggle("hidden", !multi); }
+    slidesEl.querySelectorAll(".cw-remove").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        removeFromHistory(btn.getAttribute("data-remove-key"));
+      });
+    });
+    slidesEl.querySelectorAll(".cw-resume").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        resumeContinue(btn.getAttribute("data-resume-key"), Number(btn.getAttribute("data-resume-ep")));
+      });
+    });
+    cwStartAuto();
+  }
+
+  function renderLatest() {
+    var rail = $("latestRail"), grid = $("latestGrid"), label = $("latestUpdated");
+    if (!latestItems.length) {
+      rail.innerHTML = '<div class="empty">Latest episodes are unavailable right now. Tap Refresh to try again.</div>';
+      if (grid) { grid.innerHTML = ""; grid.classList.add("hidden"); }
+      label.textContent = "Unavailable";
+      renderBannerTicker();
+      // If the Latest page is open, keep it in sync
+      if (currentSectionPreset === "latest" && !$("sectionView").classList.contains("hidden")) { renderSectionGrid(); }
+      return;
+    }
+    var sorted = latestItems.slice().sort(function (a, b) {
+      var da = parseUpd(a.upd), db = parseUpd(b.upd);
+      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    });
+    rail.innerHTML = sorted.slice(0, 14).map(latestCard).join("");
+    if (grid) { grid.innerHTML = ""; grid.classList.add("hidden"); }
+    var seeAllBtn = $("latestSeeAll");
+    if (seeAllBtn) { seeAllBtn.textContent = "See All \u2192"; }
+    wireCards(rail);
+    renderBannerTicker();
+    if (currentSectionPreset === "latest" && !$("sectionView").classList.contains("hidden")) { renderSectionGrid(); }
+    if (latestFetchedAt) {
+      var fd = new Date(latestFetchedAt);
+      label.textContent = "Updated " + (isNaN(fd.getTime()) ? latestFetchedAt
+        : fd.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
+          ", " + fd.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }));
+    }
+  }
+
+  /* Snapshot load: assets/data/latest.json, re-fetched with no-store on
+     every launch and every Refresh tap, so a fresher snapshot from
+     a rebuild is never masked by a cached copy. A successful read
+     replaces the list on screen and restamps the Updated label from
+     the snapshot's own fetched_at. A failed read keeps whatever is
+     already shown; it never blanks the rail. */
+  function loadLatestSnapshot() {
+    var ctrl = ("AbortController" in window) ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 10000) : null;
+    return fetch("assets/data/latest.json", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        if (!r.ok) { throw new Error("latest.json " + r.status); }
+        return r.json();
+      })
+      .then(function (data) {
+        if (timer) { clearTimeout(timer); }
+        var items = (data && Array.isArray(data.items)) ? data.items : [];
+        if (!items.length) { return false; }
+        items.forEach(function (it) { if (!it.p) { it.p = "anikoto"; } });
+        latestItems = items;
+        latestFetchedAt = (data && data.fetched_at) || null;
+        renderLatest();
+        return true;
+      })
+      .catch(function () { if (timer) { clearTimeout(timer); } return false; });
+  }
+
+  /* Launch and Refresh both land here: re-read the snapshot file
+     and repaint. There is no live cross-origin call anymore (see
+     the section comment above), so Refresh can only fail if the
+     app's own snapshot file cannot be read; in that case the list
+     already on screen stays, with a plain note, and the button is
+     always handed back. */
+  function loadLatest() {
+    var btn = $("latestRefreshBtn");
+    if (latestLoading) { return Promise.resolve(); }
+    latestLoading = true;
+    btn.classList.add("spinning");
+    btn.disabled = true;
+    if (latestItems.length) { $("latestUpdated").textContent = "Updating..."; }
+    function finish() {
+      latestLoading = false;
+      btn.classList.remove("spinning");
+      btn.disabled = false;
+    }
+    return loadLatestSnapshot()
+      .then(function (ok) {
+        if (!ok) {
+          if (latestItems.length) {
+            var fd = latestFetchedAt ? new Date(latestFetchedAt) : null;
+            $("latestUpdated").textContent = "Couldn't reload, showing the list saved " +
+              (fd && !isNaN(fd.getTime())
+                ? fd.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
+                  ", " + fd.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+                : "earlier") + ". Tap Refresh to try again.";
+          } else {
+            renderLatest();
+          }
+        }
+      })
+      .then(finish, finish);
+  }
+
+  /* ---------- rails ---------- */
+
+  function byScoreDesc(a, b) { return (b.sc || 0) - (a.sc || 0); }
+
+  function railSection(title, items, preset, numbered) {
+    if (items.length < 4) { return ""; }
+    var cards = items.map(function (item, i) {
+      if (numbered) {
+        return '<div class="trend-card" data-key="' + escapeHtml(keyOf(item.p, item.id)) + '">' +
+          '<span class="trend-num">' + (i + 1) + "</span>" + posterCard(item) + "</div>";
+      }
+      return posterCard(item);
+    }).join("");
+    return '<section class="rail-sec"><div class="rail-head"><span class="tick"></span><h2>' +
+      escapeHtml(title) + '</h2><button type="button" class="see-all" data-preset="' + preset +
+      '">See All &rarr;</button></div><div class="rail">' + cards + "</div></section>";
+  }
+
+  function renderRails() {
+    var wrap = $("rails");
+    if (!catalog.length) {
+      wrap.innerHTML = '<p class="loading">Loading the full catalog, 9,433 records. This takes a few seconds on a slow connection.</p>';
+      return;
+    }
+    var trending = catalog.filter(function (e) { return e.st === "Currently Airing" && e.sc != null; })
+      .sort(byScoreDesc).slice(0, 10);
+    var topRated = catalog.filter(function (e) { return e.sc != null; })
+      .sort(byScoreDesc).slice(0, 14);
+    var upcoming = catalog.filter(function (e) { return e.st === "Not yet aired"; })
+      .sort(byScoreDesc).slice(0, 14);
+    var gems = catalog.filter(function (e) { return e.sc != null && e.sc >= 8 && e.ep != null && e.ep >= 1 && e.ep <= 26; })
+      .sort(byScoreDesc).slice(0, 14);
+    var runners = catalog.filter(function (e) { return e.ep != null; })
+      .sort(function (a, b) { return b.ep - a.ep; }).slice(0, 14);
+    wrap.innerHTML =
+      railSection("Trending Now", trending, "trending", true) +
+      railSection("Top Rated", topRated, "toprated", false) +
+      railSection("Upcoming", upcoming, "upcoming", false) +
+      railSection("Hidden Gems", gems, "gems", false) +
+      railSection("Long Runners", runners, "runners", false);
+    wireCards(wrap);
+    wrap.querySelectorAll(".see-all").forEach(function (btn) {
+      btn.addEventListener("click", function () { applyPreset(btn.getAttribute("data-preset")); });
+    });
+  }
+
+  function syncRailsVisibility() {
+    /* Home has no browse/search grid to filter anymore, so the banner
+       and rails are always visible on Home. */
+    var railsEl = $("rails"); if (railsEl) { railsEl.classList.remove("hidden"); }
+    var latestEl = $("latestSection"); if (latestEl) { latestEl.classList.remove("hidden"); }
+    var bannerEl = $("bannerTicker"); if (bannerEl) { bannerEl.classList.remove("hidden"); }
+  }
+
+  /* ---------- section pages (See All) ---------- */
+  function sectionMeta(preset) {
+    if (preset === "latest") { return { title: "Latest Episodes", sub: "Most recently updated episodes, newest first." }; }
+    if (preset === "trending") { return { title: "Trending Now", sub: "Currently airing titles ranked by score." }; }
+    if (preset === "toprated") { return { title: "Top Rated", sub: "Highest scored titles in the catalog." }; }
+    if (preset === "upcoming") { return { title: "Upcoming", sub: "Titles that have not aired yet, ranked by score." }; }
+    if (preset === "gems") { return { title: "Hidden Gems", sub: "Scored 8.0 or higher with 26 episodes or fewer." }; }
+    if (preset === "runners") { return { title: "Long Runners", sub: "Titles with the most episodes." }; }
+    return { title: "Section", sub: "" };
+  }
+
+  function sectionItemsFor(preset) {
+    if (preset === "latest") {
+      return latestItems.slice().sort(function (a, b) {
+        var da = parseUpd(a.upd), db = parseUpd(b.upd);
+        return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+      });
+    }
+    if (!catalog.length) { return []; }
+    if (preset === "trending") {
+      return catalog.filter(function (e) { return e.st === "Currently Airing" && e.sc != null; }).sort(byScoreDesc);
+    }
+    if (preset === "toprated") {
+      return catalog.filter(function (e) { return e.sc != null; }).sort(byScoreDesc);
+    }
+    if (preset === "upcoming") {
+      return catalog.filter(function (e) { return e.st === "Not yet aired"; }).sort(byScoreDesc);
+    }
+    if (preset === "gems") {
+      return catalog.filter(function (e) { return e.sc != null && e.sc >= 8 && e.ep != null && e.ep >= 1 && e.ep <= 26; }).sort(byScoreDesc);
+    }
+    if (preset === "runners") {
+      return catalog.filter(function (e) { return e.ep != null; }).sort(function (a, b) { return b.ep - a.ep; });
+    }
+    return [];
+  }
+
+  function renderSectionGrid() {
+    var grid = $("sectionGrid");
+    if (!grid) { return; }
+    var meta = sectionMeta(currentSectionPreset);
+    $("sectionTitle").textContent = meta.title;
+    $("sectionSub").textContent = meta.sub || "";
+    $("sectionSub").classList.toggle("hidden", !meta.sub);
+    var total = currentSectionItems.length;
+    var isLatest = currentSectionKind === "latest";
+    if (!total) {
+      $("sectionCount").textContent = isLatest ? "No episodes to show yet." : "No titles in this section yet.";
+      grid.innerHTML = '<div class="empty">' + (isLatest ? "Latest episodes are unavailable right now. Go back and tap Refresh to try again." : "No titles match this section.") + "</div>";
+      $("sectionMoreRow").classList.add("hidden");
+      return;
+    }
+    $("sectionCount").textContent = total.toLocaleString() + (isLatest ? (total === 1 ? " episode update" : " episode updates") : (total === 1 ? " title" : " titles")) + (total > sectionShown ? ", showing first " + sectionShown.toLocaleString() : "");
+    var slice = currentSectionItems.slice(0, sectionShown);
+    if (isLatest) {
+      grid.innerHTML = slice.map(latestCard).join("");
+    } else if (currentSectionPreset === "trending") {
+      grid.innerHTML = slice.map(function (item, i) {
+        // Keep rank numbers on the full Trending page as well
+        var cardHtml = posterCard(item);
+        // Wrap with rank for visual parity with the rail - use a container that preserves card wiring
+        return cardHtml;
+      }).join("");
+    } else {
+      grid.innerHTML = slice.map(posterCard).join("");
+    }
+    wireCards(grid);
+    $("sectionMoreRow").classList.toggle("hidden", total <= sectionShown);
+    var moreBtn = $("sectionMoreBtn");
+    if (moreBtn) { moreBtn.textContent = "Show more titles (" + (total - sectionShown).toLocaleString() + " left)"; }
+  }
+
+  function openSectionPage(preset) {
+    currentSectionPreset = preset;
+    currentSectionKind = preset === "latest" ? "latest" : "catalog";
+    currentSectionItems = sectionItemsFor(preset);
+    sectionShown = PAGE;
+    // Hide other main views, show section page
+    $("browseView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("scheduleView").classList.add("hidden");
+    $("showDetail").classList.add("hidden");
+    $("episodeView").classList.add("hidden");
+    $("sectionView").classList.remove("hidden");
+    setActiveTab("home");
+    renderSectionGrid();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function closeSectionPage() {
+    $("sectionView").classList.add("hidden");
+    currentSectionPreset = null;
+    currentSectionItems = [];
+  }
+
+  function showSectionPage() {
+    if (!currentSectionPreset) { return false; }
+    currentSectionItems = sectionItemsFor(currentSectionPreset);
+    $("browseView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("scheduleView").classList.add("hidden");
+    $("showDetail").classList.add("hidden");
+    $("episodeView").classList.add("hidden");
+    $("sectionView").classList.remove("hidden");
+    renderSectionGrid();
+    return true;
+  }
+
+  function applyPreset(preset) {
+    openSectionPage(preset);
+  }
+
+  /* ---------- data loading ---------- */
+
+  function loadShowData(entry) {
+    var key = keyOf(entry.p, entry.id);
+    if (showCache[key]) { return Promise.resolve(showCache[key]); }
+    function fromPilot() {
+      if (pilotData) { return Promise.resolve(pilotData[key] || null); }
+      return fetchJson("assets/data/pilot_shows.json").then(function (d) {
+        pilotData = d; return d[key] || null;
+      }).catch(function () { pilotData = {}; return null; });
+    }
+    function fromShard() {
+      var ready = shardIndex
+        ? Promise.resolve(shardIndex)
+        : fetchJson("assets/data/shard_index.json").then(function (d) { shardIndex = d; return d; });
+      return ready.then(function (idx) {
+        var sn = idx[key];
+        if (sn == null) { return null; }
+        if (shardCache[sn]) { return shardCache[sn][key] || null; }
+        var name = "assets/data/shard-" + (sn < 10 ? "0" + sn : sn) + ".json";
+        return fetchJson(name).then(function (d) {
+          shardCache[sn] = d; return d[key] || null;
+        });
+      }).catch(function () { return null; });
+    }
+    var chain = entry.p === "anikoto" ? fromShard() : fromPilot();
+    return chain.then(function (show) {
+      if (!show && entry.p === "anikoto") { return fromPilot(); }
+      return show;
+    }).then(function (show) {
+      if (show) { showCache[key] = show; }
+      return show;
+    });
+  }
+
+  /* ---------- browse ---------- */
+
+  /* Genre data lives in the full metadata files, which are far too big
+     to load on the home page. assets/data/genres.json is a small index baked
+     at build time from those same records: "provider_id" -> [genres].
+     It loads alongside the catalog; until it arrives (or if it fails)
+     the genre dropdown simply offers "All genres" and filters nothing. */
+  var genreIndex = {};
+
+  function genresFor(item) {
+    return genreIndex[keyOf(item.p, item.id)] || [];
+  }
+
+  function renderGenreOptions() {
+    var seen = {}, values = [];
+    Object.keys(genreIndex).forEach(function (k) {
+      genreIndex[k].forEach(function (g) {
+        if (!seen[g]) { seen[g] = true; values.push(g); }
+      });
+    });
+    values.sort(function (a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    var html = '<option value="all">All genres</option>' + values.map(function (g) {
+      return '<option value="' + escapeHtml(g) + '">' + escapeHtml(g) + "</option>";
+    }).join("");
+    var sSel = $("searchGenreFilter");
+    if (sSel) {
+      var sCurrent = searchState.genre;
+      sSel.innerHTML = html;
+      sSel.value = sCurrent !== "all" && seen[sCurrent] ? sCurrent : "all";
+      searchState.genre = sSel.value;
+    }
+  }
+
+  function filteredCatalog() {
+    var q = state.query.trim().toLowerCase();
+    var list = catalog.filter(function (item) {
+      if (state.status !== "all" && String(item.st || "") !== state.status) { return false; }
+      if (state.genre !== "all" && genresFor(item).indexOf(state.genre) === -1) { return false; }
+      if (state.watchlistOnly && !watchlist[keyOf(item.p, item.id)]) { return false; }
+      if (q && String(item.t || "").toLowerCase().indexOf(q) === -1) { return false; }
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (state.sort === "score") { return (b.sc || 0) - (a.sc || 0); }
+      if (state.sort === "episodes") { return (b.ep || 0) - (a.ep || 0); }
+      return String(a.t || "").localeCompare(String(b.t || ""));
+    });
+    return list;
+  }
+
+  function renderStatusOptions() {
+    var seen = {}, values = [];
+    catalog.forEach(function (item) {
+      var s = String(item.st || "");
+      if (s && !seen[s]) { seen[s] = true; values.push(s); }
+    });
+    values.sort();
+    var html = '<option value="all">All statuses</option>' + values.map(function (s) {
+      return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + "</option>";
+    }).join("");
+    var sSel = $("searchStatusFilter");
+    if (sSel) {
+      var keep = searchState.status;
+      sSel.innerHTML = html;
+      sSel.value = keep !== "all" && values.indexOf(keep) !== -1 ? keep : "all";
+      searchState.status = sSel.value;
+    }
+  }
+
+  function renderGrid() {
+    /* Home no longer has a Browse All Titles grid (that lives on the
+       Search page now), so this is a no-op kept for existing callers. */
+    return;
+  }
+
+  /* ---------- search page ---------- */
+  /* The Search tab's own page: the full catalog with its own query
+     state (searchState) and its own grid. Browsing all titles lives
+     here now; Home is just the banner and rails. */
+
+  function filteredSearchCatalog() {
+    var q = searchState.query.trim().toLowerCase();
+    var list = catalog.filter(function (item) {
+      if (searchState.status !== "all" && String(item.st || "") !== searchState.status) { return false; }
+      if (searchState.genre !== "all" && genresFor(item).indexOf(searchState.genre) === -1) { return false; }
+      if (q && String(item.t || "").toLowerCase().indexOf(q) === -1) { return false; }
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (searchState.sort === "score") { return (b.sc || 0) - (a.sc || 0); }
+      if (searchState.sort === "episodes") { return (b.ep || 0) - (a.ep || 0); }
+      return String(a.t || "").localeCompare(String(b.t || ""));
+    });
+    return list;
+  }
+
+  function renderSearchGrid() {
+    var grid = $("searchGrid");
+    if (!grid) { return; }
+    var list = filteredSearchCatalog();
+    $("searchResultCount").textContent = !catalog.length
+      ? "Loading catalog..."
+      : list.length.toLocaleString() + " of " + catalog.length.toLocaleString() + " titles" +
+        (searchState.genre !== "all" ? " in " + searchState.genre : "") +
+        (searchState.query.trim() ? " matching \u201C" + searchState.query.trim() + "\u201D" : "") +
+        (list.length > searchState.shown ? ", showing first " + searchState.shown.toLocaleString() : "");
+    if (!catalog.length) {
+      grid.innerHTML = '<div class="empty loading">Loading the full catalog, 9,433 records. This takes a few seconds on a slow connection.</div>';
+      $("searchMoreRow").classList.add("hidden");
+      return;
+    }
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty">No titles match that search or filter. Try clearing the search or a filter.</div>';
+      $("searchMoreRow").classList.add("hidden");
+      return;
+    }
+    grid.innerHTML = list.slice(0, searchState.shown).map(posterCard).join("");
+    wireCards(grid);
+    $("searchMoreRow").classList.toggle("hidden", list.length <= searchState.shown);
+    $("searchMoreBtn").textContent = "Show more titles (" + (list.length - searchState.shown).toLocaleString() + " left)";
+  }
+
+  /* ---------- bookmarks page ---------- */
+  /* The Bookmarks tab's own page: every catalog title currently in the
+     watchlist, newest saves first is not tracked, so titles list A-Z
+     like the catalog sorts. Removing a bookmark here (or anywhere)
+     re-renders this page through syncWatchlistUi. */
+
+  function renderBookmarks() {
+    var grid = $("bookmarksGrid");
+    if (!grid) { return; }
+    var list = catalog.filter(function (item) { return !!watchlist[keyOf(item.p, item.id)]; });
+    list.sort(function (a, b) { return String(a.t || "").localeCompare(String(b.t || "")); });
+    $("bookmarksCount").textContent = !catalog.length
+      ? "Loading catalog..."
+      : list.length
+        ? list.length.toLocaleString() + (list.length === 1 ? " bookmarked title" : " bookmarked titles")
+        : "";
+    if (!catalog.length) {
+      grid.innerHTML = '<div class="empty loading">Loading the full catalog, 9,433 records. This takes a few seconds on a slow connection.</div>';
+      return;
+    }
+    if (!list.length) {
+      grid.innerHTML = '<div class="empty">No bookmarks yet. Tap the bookmark button on any poster and the title will show up here.</div>';
+      return;
+    }
+    grid.innerHTML = list.map(posterCard).join("");
+    wireCards(grid);
+  }
+
+  /* ---------- detail and player ---------- */
+
+  function destroyHls() {
+    if (window.__animeHls) {
+      try { window.__animeHls.destroy(); } catch (e) {}
+      window.__animeHls = null;
+    }
+  }
+  /* hls.js is loaded lazily, only when a direct .m3u8 stream actually needs
+     it. It must never be a synchronous <script> in <head>: that blocks the
+     browser from painting anything at all until the CDN answers, which left
+     phones on slow or filtered networks staring at a black screen. */
+  var hlsPromise = null;
+  function loadHls() {
+    if (window.Hls) { return Promise.resolve(window.Hls); }
+    if (hlsPromise) { return hlsPromise; }
+    hlsPromise = new Promise(function (resolve) {
+      var s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js";
+      s.async = true;
+      s.onload = function () { resolve(window.Hls || null); };
+      s.onerror = function () { hlsPromise = null; resolve(null); };
+      document.head.appendChild(s);
+    });
+    return hlsPromise;
+  }
+  function isM3u8(url) { return !!url && url.split("?")[0].split("#")[0].toLowerCase().endsWith(".m3u8"); }
+  function isDirectFile(url) {
+    if (!url) { return false; }
+    var c = url.split("?")[0].split("#")[0].toLowerCase();
+    return c.endsWith(".m3u8") || c.endsWith(".mp4") || c.endsWith(".webm");
+  }
+
+  function sameTitle(a, b) {
+    if (!a || !b) { return false; }
+    if (a.mal != null && b.mal != null && a.mal === b.mal) { return true; }
+    if (a.al != null && b.al != null && a.al === b.al) { return true; }
+    if (a.s && b.s && a.s === b.s) { return true; }
+    return String(a.t || "").toLowerCase() === String(b.t || "").toLowerCase();
+  }
+
+  function syncDetailWatchBtn() {
+    if (!state.currentKey) { return; }
+    var on = !!watchlist[state.currentKey];
+    $("detailWatchBtn").textContent = on ? "Remove from watchlist" : "Add to watchlist";
+    $("detailHeartBtn").classList.toggle("on", on);
+    $("detailHeartBtn").setAttribute("aria-label", on ? "Remove from watchlist" : "Save to watchlist");
+    var epvHeart = $("epvHeartBtn");
+    if (epvHeart) {
+      epvHeart.classList.toggle("on", on);
+      epvHeart.style.color = on ? "var(--accent)" : "";
+      epvHeart.style.borderColor = on ? "var(--accent)" : "";
+    }
+    var save = $("epvSaveBtn");
+    if (save) { save.classList.toggle("on", on); }
+    var vpSave = $("vpBtnSave");
+    if (vpSave) { vpSave.classList.toggle("on", on); }
+  }
+
+  function setAudio(audio) {
+    state.audio = audio;
+    $("audioSubBtn").classList.toggle("active", audio === "sub");
+    $("audioDubBtn").classList.toggle("active", audio === "dub");
+    syncEpvAudioLabels();
+    if (state.currentShow && state.currentEpisode != null) {
+      playEpisode(state.currentEpisode);
+    }
+  }
+
+  function syncEpvAudioLabels() {
+    var label = state.audio === "dub" ? "DUB" : "SUB";
+    if ($("epvAudioLabel")) { $("epvAudioLabel").textContent = label; }
+    if ($("epvCtlAudioVal")) { $("epvCtlAudioVal").textContent = state.audio === "dub" ? "English" : "Japanese"; }
+    if ($("epvSetSub")) { $("epvSetSub").classList.toggle("active", state.audio === "sub"); }
+    if ($("epvSetDub")) { $("epvSetDub").classList.toggle("active", state.audio === "dub"); }
+    if ($("epvSub") && state.currentEpisode != null) {
+      $("epvSub").textContent = "Episode " + state.currentEpisode + " \u00B7 " + label;
+    }
+  }
+
+  /* ---------- Mizuki-style detail hero, tabs, and episode view ---------- */
+
+  function epTitleOf(e) {
+    var t = e && e[1] ? String(e[1]).trim() : "";
+    return t || ("Episode " + (e ? e[0] : ""));
+  }
+
+  function renderDetailHero() {
+    var hero = $("detailHero"), entry = state.currentEntry;
+    if (!hero || !entry) { return; }
+    var url = posterFor(entry);
+    var old = hero.querySelector("img");
+    if (old) { old.remove(); }
+    if (url) {
+      var img = document.createElement("img");
+      img.src = url;
+      img.alt = "";
+      img.loading = "lazy";
+      img.onerror = function () { img.remove(); };
+      hero.insertBefore(img, hero.firstChild);
+    }
+    $("detailHeroTitle").textContent = entry.t || "";
+  }
+
+  function renderDetailChips(entry, eps, meta) {
+    var chips = "";
+    if (entry.sc != null) {
+      chips += '<span class="dchip"><span class="star">&#9733;</span>' + Number(entry.sc).toFixed(1) + "</span>";
+    }
+    var season = seasonLabel(meta);
+    if (season) {
+      chips += '<span class="dchip">' + escapeHtml(season) + "</span>";
+    }
+    if (meta && meta.type.length) {
+      chips += '<span class="dchip">' + escapeHtml(meta.type[0]) + "</span>";
+    }
+    chips += '<span class="dchip">' + eps.length + (eps.length === 1 ? " Episode" : " Episodes") + "</span>";
+    if (entry.st) {
+      chips += '<span class="dchip">' + (entry.st === "Currently Airing" ? '<span class="dot"></span>' : "") +
+        escapeHtml(entry.st === "Currently Airing" ? "Releasing" : entry.st) + "</span>";
+    }
+    $("detailChips").innerHTML = chips;
+  }
+
+  function buildDetailsHtml(entry, eps, meta) {
+    function factRow(k, v) {
+      return '<div class="fact-row"><span class="fk">' + escapeHtml(k) + '</span><span class="fv">' + v + "</span></div>";
+    }
+    var rows =
+      factRow("Status", escapeHtml(entry.st || "Unknown")) +
+      factRow("Score", escapeHtml(entry.sc == null ? "No score" : Number(entry.sc).toFixed(1) + " / 10")) +
+      factRow("Episodes", escapeHtml(String(eps.length)));
+    if (meta && meta.type.length) { rows += factRow("Type", escapeHtml(meta.type.join(", "))); }
+    var season = seasonLabel(meta);
+    if (season) { rows += factRow("Season", escapeHtml(season)); }
+    if (meta && meta.studios.length) { rows += factRow("Studio", escapeHtml(meta.studios.join(", "))); }
+    if (meta && meta.genres.length) { rows += factRow("Genres", escapeHtml(meta.genres.join(", "))); }
+    rows +=
+      factRow("MAL ID", escapeHtml(entry.mal == null ? "Not in data" : String(entry.mal))) +
+      factRow("AniList ID", escapeHtml(entry.al == null ? "Not in data" : String(entry.al)));
+    return '<div class="fact-rows">' + rows + "</div>";
+  }
+
+  function applyMetadata(entry, eps) {
+    if (state.currentKey !== keyOf(entry.p, entry.id)) { return; }
+    var meta = metaFor(entry);
+    renderDetailChips(entry, eps, meta);
+
+    var storyEl = $("storylineText"), moreBtn = $("storylineMore");
+    var desc = meta && meta.description ? meta.description : "";
+    if (desc) {
+      storyEl.textContent = desc;
+      var long = desc.length > 320;
+      storyEl.classList.toggle("story-clamp", long);
+      moreBtn.classList.toggle("hidden", !long);
+      moreBtn.textContent = "Read more";
+      moreBtn.onclick = function () {
+        var clamped = storyEl.classList.toggle("story-clamp");
+        moreBtn.textContent = clamped ? "Read more" : "Show less";
+      };
+    } else {
+      var statusWord = entry.st === "Currently Airing" ? "currently airing"
+        : entry.st === "Finished Airing" ? "finished airing"
+        : entry.st === "Not yet aired" ? "not yet aired" : "listed";
+      storyEl.textContent =
+        (entry.t || "This title") + " is " + statusWord + " with " + eps.length +
+        (eps.length === 1 ? " episode" : " episodes") + " indexed here" +
+        (entry.sc != null ? ", rated " + Number(entry.sc).toFixed(1) + " out of 10" : "") +
+        ". No synopsis is included in the data for this title, so there is no storyline text to show.";
+      storyEl.classList.remove("story-clamp");
+      moreBtn.classList.add("hidden");
+    }
+
+    $("genreChips").innerHTML = meta && meta.genres.length
+      ? meta.genres.map(function (g) { return '<span class="genre-chip">' + escapeHtml(g) + "</span>"; }).join("")
+      : '<span class="genre-chip">Genre data is not in the catalog for this title</span>';
+
+    $("detailMeta").innerHTML = buildDetailsHtml(entry, eps, meta);
+  }
+
+  function syncWatchPrimary(eps) {
+    var btn = $("watchPrimaryBtn");
+    if (!eps || !eps.length) {
+      btn.disabled = true;
+      $("watchPrimaryMain").textContent = "No episodes yet";
+      $("watchPrimarySub").textContent = "Nothing to play for this title";
+      state.primaryEp = null;
+      return;
+    }
+    btn.disabled = false;
+    var seen = state.currentKey ? (state.watched[state.currentKey] || {}) : {};
+    var maxSeen = 0;
+    eps.forEach(function (e) { if (seen[e[0]] && e[0] > maxSeen) { maxSeen = e[0]; } });
+    var next = null;
+    eps.forEach(function (e) { if (next == null && e[0] > maxSeen) { next = e[0]; } });
+    if (maxSeen && next != null) {
+      state.primaryEp = next;
+      $("watchPrimaryMain").textContent = "Continue Episode " + next;
+      $("watchPrimarySub").textContent = "Up Next \u00B7 Ep " + maxSeen + " Finished";
+    } else if (maxSeen) {
+      state.primaryEp = eps[0][0];
+      $("watchPrimaryMain").textContent = "Watch Episode " + eps[0][0];
+      $("watchPrimarySub").textContent = "Start over from the beginning";
+    } else {
+      state.primaryEp = eps[0][0];
+      $("watchPrimaryMain").textContent = "Watch Episode " + eps[0][0];
+      $("watchPrimarySub").textContent = eps.length + (eps.length === 1 ? " episode" : " episodes") + " available";
+    }
+  }
+
+  function setDetailTab(tab) {
+    state.detailTab = tab;
+    $("dtabOverview").classList.toggle("on", tab === "overview");
+    $("dtabEpisodes").classList.toggle("on", tab === "episodes");
+    $("dtabDetails").classList.toggle("on", tab === "details");
+    $("dtabMore").classList.toggle("on", tab === "more");
+    $("overviewPane").classList.toggle("hidden", tab !== "overview");
+    $("episodesPane").classList.toggle("hidden", tab !== "episodes");
+    $("detailsPane").classList.toggle("hidden", tab !== "details");
+    $("morePane").classList.toggle("hidden", tab !== "more");
+  }
+
+  function shareCurrentTitle() {
+    var entry = state.currentEntry;
+    if (!entry) { return; }
+    var url = entry.u || "";
+    var title = entry.t || "Anime";
+    if (navigator.share && url) {
+      navigator.share({ title: title, url: url }).catch(function () {});
+      return;
+    }
+    if (url && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        var lbl = $("epvShareLabel");
+        if (lbl && !$("episodeView").classList.contains("hidden")) {
+          lbl.textContent = "Link copied";
+          setTimeout(function () { lbl.textContent = "Share"; }, 1800);
+        }
+      }).catch(function () { window.open(url, "_blank", "noopener"); });
+      return;
+    }
+    if (url) { window.open(url, "_blank", "noopener"); }
+  }
+
+  var DOTS_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+
+  function episodeRowHtml(e) {
+    var entry = state.currentEntry;
+    var num = e[0];
+    var url = entry ? posterFor(entry) : null;
+    var img = url
+      ? '<img src="' + escapeHtml(url) + '" alt="" loading="lazy" onerror="this.remove();">'
+      : "";
+    var seen = state.currentKey && state.watched[state.currentKey] && state.watched[state.currentKey][num];
+    var audio = e[3] ? "Sub + Dub" : "Sub";
+    var src = e[4] || (entry ? entry.u : "") || "";
+    var now = state.currentEpisode === num;
+    return '<article class="eprow' + (now ? " now" : "") + '" data-ep="' + num + '">' +
+      '<div class="epthumb" style="--h:' + hueFor((entry ? entry.t : "") + num) + '">' + img +
+      '<span class="epthumb-num">EP ' + num + "</span>" + (seen ? '<span class="prog"></span>' : "") + "</div>" +
+      '<div class="eprow-info"><h4>' + escapeHtml(epTitleOf(e)) + "</h4>" +
+      '<p class="eprow-meta"><span>EP ' + num + " \u00B7 " + audio + "</span>" +
+      (now ? '<span class="now-badge">NOW PLAYING</span>' : "") + "</p></div>" +
+      (src ? '<button type="button" class="eprow-menu" data-src="' + escapeHtml(src) +
+        '" aria-label="Open the source page for episode ' + num + '">' + DOTS_SVG + "</button>" : "") +
+      "</article>";
+  }
+
+  function wireEpisodeRows(scope) {
+    scope.querySelectorAll(".eprow").forEach(function (row) {
+      row.addEventListener("click", function (ev) {
+        if (ev.target && ev.target.closest && ev.target.closest(".eprow-menu")) { return; }
+        playEpisode(Number(row.getAttribute("data-ep")));
+      });
+    });
+    scope.querySelectorAll(".eprow-menu").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var src = btn.getAttribute("data-src");
+        if (src) { window.open(src, "_blank", "noopener"); }
+      });
+    });
+  }
+
+  function renderEpisodeList() {
+    var eps = state.currentShow && state.currentShow.eps ? state.currentShow.eps : [];
+    var grid = $("episodeGrid");
+    if (!eps.length) {
+      grid.innerHTML = '<div class="empty">No episodes in the data for this title. A few shows came back empty from the scrape even though they should have episodes.</div>';
+      $("epLegend").textContent = "";
+      return;
+    }
+    grid.innerHTML = '<div class="eplist">' + eps.map(episodeRowHtml).join("") + "</div>";
+    wireEpisodeRows(grid);
+    var anyDub = eps.some(function (e) { return !!e[3]; });
+    $("epLegend").textContent = anyDub ? "Episodes marked Sub + Dub have both audio tracks." : "All episodes here are sub only.";
+  }
+
+  function currentEpRecord() {
+    var show = state.currentShow;
+    if (!show || state.currentEpisode == null) { return null; }
+    var found = null;
+    (show.eps || []).forEach(function (e) { if (e[0] === state.currentEpisode) { found = e; } });
+    return found;
+  }
+
+  function epIndexOf(num) {
+    var eps = state.currentShow ? (state.currentShow.eps || []) : [];
+    for (var i = 0; i < eps.length; i++) { if (eps[i][0] === num) { return i; } }
+    return -1;
+  }
+
+  function openSourceForCurrentEp() {
+    var ep = currentEpRecord();
+    var url = (ep && ep[4]) || (state.currentEntry && state.currentEntry.u) || null;
+    if (url) { window.open(url, "_blank", "noopener"); }
+  }
+
+  function renderEpvList() {
+    var list = $("epvList");
+    if (!list || !state.currentShow) { return; }
+    var eps = state.currentShow.eps || [];
+    $("epvTotal").textContent = eps.length + " total";
+    $("epvCurrentLabel").textContent = state.currentEpisode != null
+      ? "You're on Episode " + state.currentEpisode
+      : "No episode selected yet";
+    syncEpvAudioLabels();
+
+    // Range chunks of 50 for long runners; a plain label otherwise.
+    var sel = $("epvRangeSelect"), lab = $("epvRangeLabel");
+    if (eps.length > 50) {
+      var chunks = Math.ceil(eps.length / 50);
+      if (state.epvRange >= chunks) { state.epvRange = 0; }
+      sel.innerHTML = "";
+      for (var c = 0; c < chunks; c++) {
+        var opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = (c * 50 + 1) + "\u2013" + Math.min(eps.length, (c + 1) * 50);
+        sel.appendChild(opt);
+      }
+      sel.value = String(state.epvRange);
+      sel.classList.remove("hidden");
+      lab.classList.add("hidden");
+    } else {
+      sel.classList.add("hidden");
+      if (eps.length) {
+        lab.textContent = "1\u2013" + eps.length + " \u25BE";
+        lab.classList.remove("hidden");
+      } else { lab.classList.add("hidden"); }
+    }
+
+    var q = state.epvQuery.trim().toLowerCase();
+    var rows = eps.filter(function (e, idx) {
+      if (!q && eps.length > 50) {
+        var chunk = Math.floor(idx / 50);
+        if (chunk !== state.epvRange) { return false; }
+      }
+      if (q) {
+        return epTitleOf(e).toLowerCase().indexOf(q) !== -1 || String(e[0]).indexOf(q) !== -1;
+      }
+      return true;
+    });
+    list.innerHTML = rows.length
+      ? rows.map(episodeRowHtml).join("")
+      : '<div class="empty">No episodes match that search.</div>';
+    wireEpisodeRows(list);
+
+    var idx = epIndexOf(state.currentEpisode);
+    $("epvPrevBtn").disabled = idx <= 0;
+    $("epvNextBtn").disabled = idx < 0 || idx >= eps.length - 1;
+    if ($("vpBtnPrev")) { $("vpBtnPrev").disabled = idx <= 0; }
+    if ($("vpBtnNext")) { $("vpBtnNext").disabled = idx < 0 || idx >= eps.length - 1; }
+    var shareBtn = $("epvShareBtn");
+    var ep = currentEpRecord();
+    shareBtn.disabled = !((ep && ep[4]) || (state.currentEntry && state.currentEntry.u));
+    syncDetailWatchBtn();
+  }
+
+  function openEpisodeView() {
+    var entry = state.currentEntry, ep = currentEpRecord();
+    if (!entry || !ep) { return; }
+    $("showDetail").classList.add("hidden");
+    $("episodeView").classList.remove("hidden");
+    $("epvTitle").textContent = epTitleOf(ep);
+    if ($("vpEpTitle")) { $("vpEpTitle").textContent = epTitleOf(ep); }
+    if ($("vpEpSub")) { $("vpEpSub").textContent = "Episode " + ep[0] + " \u00B7 " + (entry.t || ""); }
+    if ($("vpEpName")) { $("vpEpName").textContent = epTitleOf(ep); }
+    if ($("vpEmbedTitle")) { $("vpEmbedTitle").textContent = "Episode " + ep[0] + " \u00B7 " + (entry.t || ""); }
+    $("epvCtlSource").textContent = "Auto";
+    $("epvSettings").classList.add("hidden");
+    $("epvCtlMore").setAttribute("aria-expanded", "false");
+    $("epvFeedback").classList.add("hidden");
+    $("epvFeedback").innerHTML = "";
+    $("epvCommentsBtn").setAttribute("aria-expanded", "false");
+    state.epvQuery = "";
+    var search = $("epvSearchInput");
+    if (search) { search.value = ""; }
+    var idx = epIndexOf(ep[0]);
+    state.epvRange = idx > 0 ? Math.floor(idx / 50) : 0;
+    syncEpvAudioLabels();
+    renderEpvList();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function closeEpisodeView() {
+    $("episodeView").classList.add("hidden");
+    $("showDetail").classList.remove("hidden");
+    setDetailTab("episodes");
+    renderEpisodeList();
+    if (state.currentShow) { syncWatchPrimary(state.currentShow.eps || []); }
+  }
+
+  /* ---------- custom player chrome ---------- */
+  /* The overlay from the reference screenshot: X + episode title and a
+     pill toolbar up top, -10s / play-pause / +10s / +85s in the center,
+     a scrub bar with time labels, and Episodes / Previous / Next pills
+     plus round CC / comment / save / lock / fullscreen buttons below.
+     It fully drives direct-file playback (native <video>) and only ever
+     appears in native mode. Embedded source players (iframes) cannot be
+     driven cross-origin and the overlay froze them: its top and bottom
+     bars sat over the iframe and swallowed the taps meant for the source
+     player's own controls. So in embed mode the chrome, its toast, and
+     the unlock / show-controls buttons are removed entirely (CSS
+     [data-mode="embed"] plus vpSetMode), the iframe gets every tap
+     directly, and navigation back is the slim .epv-embed-bar above the
+     video. No fake times are shown for embeds. */
+  var VP_PLAY_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.3v13.4L18.6 12z"/></svg>';
+  var VP_PAUSE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5h3.6v14H7.5zM12.9 5h3.6v14h-3.6z"/></svg>';
+  var vpVideo = null, vpHideTimer = null, vpToastTimer = null, vpLocked = false;
+
+  function vpFmt(sec) {
+    if (sec == null || isNaN(sec) || !isFinite(sec) || sec < 0) { return "00:00"; }
+    sec = Math.floor(sec);
+    var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    function p2(n) { return (n < 10 ? "0" : "") + n; }
+    return h > 0 ? h + ":" + p2(m) + ":" + p2(s) : p2(m) + ":" + p2(s);
+  }
+
+  function vpToast(msg) {
+    var t = $("vpToast");
+    if (!t || !vpIsNative()) { return; }
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    clearTimeout(vpToastTimer);
+    vpToastTimer = setTimeout(function () { t.classList.add("hidden"); }, 2800);
+  }
+
+  function vpIsNative() {
+    var stage = $("vpStage");
+    return !!stage && stage.getAttribute("data-mode") === "native";
+  }
+
+  function vpShowChrome() {
+    if (!vpIsNative()) { return; }
+    var chrome = $("vpChrome");
+    if (chrome) { chrome.classList.remove("vp-hidden"); }
+  }
+
+  function vpScheduleHide() {
+    clearTimeout(vpHideTimer);
+    if (vpLocked || !vpIsNative()) { return; }
+    vpHideTimer = setTimeout(function () {
+      if (vpVideo && !vpVideo.paused && !vpLocked && vpIsNative()) {
+        $("vpChrome").classList.add("vp-hidden");
+      }
+    }, 3200);
+  }
+
+  function vpSetMode(mode) {
+    var stage = $("vpStage"), chrome = $("vpChrome");
+    if (!stage || !chrome) { return; }
+    stage.setAttribute("data-mode", mode);
+    /* Chrome only exists for native playback. In embed and none modes it
+       stays hidden (and CSS display:none in embed mode), so nothing ever
+       overlays an embedded iframe. */
+    chrome.classList.toggle("hidden", mode !== "native");
+    if (mode !== "native") { vpVideo = null; }
+    vpLocked = false;
+    stage.classList.remove("vp-locked");
+    if ($("vpUnlockBtn")) { $("vpUnlockBtn").classList.add("hidden"); }
+    if ($("vpShowBtn")) { $("vpShowBtn").classList.add("hidden"); }
+    var bar = $("vpEmbedBar");
+    if (bar) {
+      bar.classList.toggle("hidden", mode !== "embed");
+      if (mode === "embed") {
+        var t = $("vpEmbedTitle"), ep = currentEpRecord(), entry = state.currentEntry;
+        if (t) {
+          t.textContent = ep
+            ? "Episode " + ep[0] + (entry && entry.t ? " \u00B7 " + entry.t : "")
+            : "";
+        }
+      }
+    }
+    clearTimeout(vpHideTimer);
+    clearTimeout(vpToastTimer);
+    var toast = $("vpToast");
+    if (toast) { toast.classList.add("hidden"); }
+    chrome.classList.remove("vp-hidden");
+  }
+
+  function vpPaintSeek() {
+    var seek = $("vpSeek");
+    if (!seek || !vpVideo) { return; }
+    var dur = vpVideo.duration || 0;
+    var pct = dur > 0 ? (vpVideo.currentTime / dur) * 100 : 0;
+    seek.value = String(Math.round(pct * 10));
+    seek.style.background = "linear-gradient(90deg, var(--accent) " + pct + "%, rgba(255,255,255,.28) " + pct + "%)";
+    $("vpCur").textContent = vpFmt(vpVideo.currentTime);
+    $("vpDur").textContent = vpFmt(dur);
+  }
+
+  function vpSyncPlayBtn() {
+    var btn = $("vpBtnPlay");
+    if (!btn) { return; }
+    btn.innerHTML = vpVideo && !vpVideo.paused ? VP_PAUSE_SVG : VP_PLAY_SVG;
+    btn.setAttribute("aria-label", vpVideo && !vpVideo.paused ? "Pause" : "Play");
+  }
+
+  function vpTogglePlay() {
+    if (!vpVideo) { return; }
+    if (vpVideo.paused) { vpVideo.play().catch(function () {}); }
+    else { vpVideo.pause(); }
+  }
+
+  function vpBindVideo(video, num) {
+    vpVideo = video;
+    video.addEventListener("loadedmetadata", function () {
+      if (state.currentEpisode !== num) { return; }
+      vpPaintSeek();
+    });
+    video.addEventListener("timeupdate", function () {
+      if (state.currentEpisode !== num) { return; }
+      vpPaintSeek();
+    });
+    video.addEventListener("play", function () { vpSyncPlayBtn(); vpScheduleHide(); });
+    video.addEventListener("pause", function () {
+      vpSyncPlayBtn();
+      clearTimeout(vpHideTimer);
+      vpShowChrome();
+    });
+    video.addEventListener("ended", function () { vpSyncPlayBtn(); vpShowChrome(); });
+    video.addEventListener("click", function () { vpTogglePlay(); });
+    vpSyncPlayBtn();
+    vpPaintSeek();
+  }
+
+  function vpFullscreen() {
+    var stage = $("vpStage");
+    /* Never fullscreen the wrapper around an embedded iframe: the source
+       player's own fullscreen button does that job. This stays unreachable
+       in embed mode (the chrome is gone), and the guard keeps it that way. */
+    if (stage && stage.getAttribute("data-mode") === "embed") { return; }
+    function fail() { vpToast("Fullscreen is not available for this player here."); }
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+        return;
+      }
+      if (stage && stage.requestFullscreen) {
+        var p = stage.requestFullscreen();
+        if (p && p.catch) { p.catch(function () {
+          if (vpVideo && vpVideo.webkitEnterFullscreen) { vpVideo.webkitEnterFullscreen(); }
+          else { fail(); }
+        }); }
+        return;
+      }
+      if (vpVideo && vpVideo.webkitEnterFullscreen) { vpVideo.webkitEnterFullscreen(); return; }
+      fail();
+    } catch (e) { fail(); }
+  }
+
+  function vpToggleCaptions() {
+    if (!vpVideo) {
+      vpToast("Subtitles for embedded players are set inside the source player.");
+      return;
+    }
+    var tracks = vpVideo.textTracks;
+    if (!tracks || !tracks.length) {
+      vpToast("This stream has no caption track to switch on.");
+      return;
+    }
+    var showing = false;
+    for (var i = 0; i < tracks.length; i++) {
+      if (tracks[i].mode === "showing") { showing = true; }
+    }
+    for (var j = 0; j < tracks.length; j++) {
+      tracks[j].mode = showing ? "hidden" : "showing";
+    }
+    $("vpBtnCC").classList.toggle("on", !showing);
+    $("vpBtnSubs").classList.toggle("off", showing);
+    vpToast(showing ? "Captions off." : "Captions on.");
+  }
+
+  function playEpisode(num) {
+    var show = state.currentShow, entry = state.currentEntry;
+    if (!show || !entry) { return; }
+    var ep = null;
+    (show.eps || []).forEach(function (e) { if (e[0] === num) { ep = e; } });
+    if (!ep) { return; }
+    state.currentEpisode = num;
+    if (state.currentKey) {
+      if (!state.watched[state.currentKey]) { state.watched[state.currentKey] = {}; }
+      state.watched[state.currentKey][num] = true;
+    }
+    recordWatchHistory(num);
+    var area = $("playerArea"), note = $("playerNote");
+    openEpisodeView();
+    renderEpisodeList();
+    var provider = entry.p;
+    var info = PROVIDER_STATUS[provider] || {};
+    var sub = ep[2], dub = ep[3], sourceUrl = ep[4];
+
+    if (CATALOG_ONLY[provider] || EXPERIMENTAL[provider]) {
+      destroyHls();
+      vpSetMode("none");
+      area.innerHTML = '<div class="player-note"><strong>' + escapeHtml(info.label || "Not streamable yet") + ".</strong><br>" +
+        escapeHtml(info.note || "") + "</div>";
+      note.innerHTML = sourceUrl
+        ? 'Source: <a href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener">Open source page</a>'
+        : "No source URL in the data for this episode.";
+      return;
+    }
+
+    var url = state.audio === "dub" ? (dub || sub) : sub;
+    note.textContent = state.audio === "dub" && !dub ? "No dub for this episode, playing sub instead." : "";
+
+    if (!url) {
+      destroyHls();
+      vpSetMode("none");
+      area.innerHTML = '<div class="player-note"><strong>No stream URL for this episode.</strong><br>' +
+        "The data has no embed URL for episode " + num + "." +
+        (sourceUrl ? ' Try the <a href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener">source page</a>.' : "") + "</div>";
+      return;
+    }
+
+    if (isDirectFile(url)) {
+      destroyHls();
+      area.innerHTML = '<video id="playerVideo" autoplay playsinline></video>';
+      var video = $("playerVideo");
+      vpSetMode("native");
+      vpBindVideo(video, num);
+      if (!note.textContent) {
+        note.innerHTML = "Direct file playback." + (sourceUrl
+          ? ' Source: <a href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener">Open source page</a>' : "");
+      }
+      if (isM3u8(url) && !video.canPlayType("application/vnd.apple.mpegurl")) {
+        // No native HLS (e.g. Chrome/Android): pull in hls.js on demand.
+        // The episode number guard keeps a slow load from hijacking the
+        // player after the reader has already picked another episode.
+        note.textContent = "Loading the stream player...";
+        loadHls().then(function (HlsLib) {
+          if (state.currentEpisode !== num || !$("playerVideo")) { return; }
+          if (HlsLib && HlsLib.isSupported()) {
+            var hls = new HlsLib();
+            window.__animeHls = hls;
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(HlsLib.Events.MANIFEST_PARSED, function () {
+              note.innerHTML = "Direct file playback." + (sourceUrl
+                ? ' Source: <a href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener">Open source page</a>' : "");
+              video.play().catch(function () {});
+            });
+          } else {
+            note.textContent = "The stream player could not be loaded, so this .m3u8 stream cannot play here. Try the source page instead.";
+          }
+        });
+      } else {
+        // MP4/WebM, or a browser with native HLS support (Safari/iOS).
+        video.src = url;
+      }
+      return;
+    }
+
+    destroyHls();
+    vpSetMode("embed");
+    area.innerHTML = '<iframe src="' + escapeHtml(url) + '" allowfullscreen allow="autoplay; fullscreen" title="Episode ' + num + ' player"></iframe>';
+    if (!note.textContent) {
+      note.innerHTML = "Playing through the stored embed link, using that player's own controls." + (sourceUrl
+        ? ' Source: <a href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener">Open source page</a>' : "");
+    }
+  }
+
+  function renderDetail(entry, show) {
+    state.currentEntry = entry;
+    state.currentShow = show;
+    state.currentKey = keyOf(entry.p, entry.id);
+    state.currentEpisode = null;
+    $("detailTitle").textContent = entry.t || "Untitled";
+    renderDetailPoster();
+    syncDetailWatchBtn();
+
+    var eps = show && show.eps ? show.eps : [];
+
+    /* Overview: Storyline / Genres / Franchise Order, Mizuki layout.
+       Storyline, genres, season, type, and studio come from the real
+       metadata files (see loadMetadata); applyMetadata fills them in
+       with whatever is already cached, then again once the files land. */
+    applyMetadata(entry, eps);
+    loadMetadata().then(function () { applyMetadata(entry, eps); });
+
+    var fUrl = posterFor(entry);
+    $("franchiseCard").innerHTML =
+      '<div class="franchise-card" id="franchiseJump" role="button" aria-label="Jump to episodes for this title">' +
+      (fUrl ? '<img src="' + escapeHtml(fUrl) + '" alt="" loading="lazy" onerror="this.remove();">' : "") +
+      '<span class="franchise-current">Current</span>' +
+      '<span class="franchise-title">' + escapeHtml(entry.t || "Untitled") + "</span></div>";
+    $("franchiseJump").addEventListener("click", function () { setDetailTab("episodes"); });
+
+    $("alsoOnBlock").innerHTML = "";
+
+    /* Details tab: the full fact sheet (also rebuilt by applyMetadata
+       once the metadata files arrive, to add type, season, and studio). */
+    $("detailMeta").innerHTML = buildDetailsHtml(entry, eps, metaFor(entry));
+
+    /* More tab: same-status titles with the closest scores. */
+    var selfKey = keyOf(entry.p, entry.id);
+    var related = catalog.filter(function (e) {
+      return keyOf(e.p, e.id) !== selfKey && e.st === entry.st && e.sc != null;
+    }).sort(function (a, b) {
+      var da = Math.abs((a.sc || 0) - (entry.sc || 0)), db = Math.abs((b.sc || 0) - (entry.sc || 0));
+      return da - db || (b.sc || 0) - (a.sc || 0);
+    }).slice(0, 8);
+    $("moreGrid").innerHTML = related.length
+      ? related.map(posterCard).join("")
+      : '<div class="empty">No similar titles in the catalog.</div>';
+    wireCards($("moreGrid"));
+
+    renderDetailHero();
+    renderDetailChips(entry, eps, metaFor(entry));
+    syncWatchPrimary(eps);
+    setDetailTab("overview");
+    $("epHeading").textContent = "Episodes (" + eps.length + ")";
+    renderEpisodeList();
+    destroyHls();
+    vpSetMode("none");
+    $("playerArea").innerHTML = '<div class="player-note">' +
+      (eps.length ? "Pick an episode below to play it. Sub is the default, switch to dub with the toggle where a dub exists."
+                  : "No episodes to play for this title.") + "</div>";
+    $("playerNote").textContent = "";
+
+    /* Continue Watching resume: a ticker tap stashes the episode to
+       play, and it starts here once the show data has loaded. */
+    if (state.pendingResumeKey === state.currentKey && state.pendingResumeEp != null) {
+      var resumeEp = state.pendingResumeEp;
+      state.pendingResumeKey = null;
+      state.pendingResumeEp = null;
+      var exists = eps.some(function (e) { return e[0] === resumeEp; });
+      if (exists) { playEpisode(resumeEp); }
+    }
+  }
+
+  function openShow(key) {
+    var entry = null;
+    catalog.forEach(function (e) { if (keyOf(e.p, e.id) === key) { entry = e; } });
+    if (!entry) { state.pendingResumeKey = null; state.pendingResumeEp = null; return; }
+    if (state.pendingResumeKey !== key) { state.pendingResumeKey = null; state.pendingResumeEp = null; }
+    if ($("sectionView") && !$("sectionView").classList.contains("hidden")) { returnView = "section"; }
+    else if ($("scheduleView") && !$("scheduleView").classList.contains("hidden")) { returnView = "schedule"; }
+    else if ($("searchView") && !$("searchView").classList.contains("hidden")) { returnView = "search"; }
+    else if ($("bookmarksView") && !$("bookmarksView").classList.contains("hidden")) { returnView = "bookmarks"; }
+    else { returnView = "browse"; }
+    $("backButton").setAttribute("aria-label", returnView === "schedule" ? "Back to schedule" : returnView === "section" ? "Back to " + sectionMeta(currentSectionPreset).title : returnView === "search" ? "Back to search" : returnView === "bookmarks" ? "Back to bookmarks" : "Back to browse");
+    $("browseView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("sectionView").classList.add("hidden");
+    $("scheduleView").classList.add("hidden");
+    $("episodeView").classList.add("hidden");
+    $("showDetail").classList.remove("hidden");
+    setDetailTab("overview");
+    state.currentEntry = entry;
+    state.currentKey = key;
+    state.currentEpisode = null;
+    renderDetailPoster();
+    renderDetailHero();
+    $("detailChips").innerHTML = "";
+    syncDetailWatchBtn();
+    $("detailTitle").textContent = entry.t || "Loading show...";
+    $("detailMeta").innerHTML = "<p>Loading episode data...</p>";
+    $("storylineText").textContent = "Loading...";
+    $("storylineText").classList.remove("story-clamp");
+    $("storylineMore").classList.add("hidden");
+    $("genreChips").innerHTML = "";
+    $("franchiseCard").innerHTML = "";
+    $("alsoOnBlock").innerHTML = "";
+    $("moreGrid").innerHTML = "";
+    $("episodeGrid").innerHTML = "";
+    $("epLegend").textContent = "";
+    $("epHeading").textContent = "Episodes";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    loadShowData(entry).then(function (show) {
+      if (state.currentKey !== key && $("showDetail").classList.contains("hidden")) { return; }
+      renderDetail(entry, show || { eps: [] });
+    });
+  }
+
+  function closeDetail() {
+    state.currentShow = null;
+    state.currentEntry = null;
+    state.currentEpisode = null;
+    state.epvQuery = "";
+    if ($("detailPoster")) { $("detailPoster").innerHTML = ""; }
+    destroyHls();
+    $("showDetail").classList.add("hidden");
+    $("episodeView").classList.add("hidden");
+  }
+
+  function showBrowse() {
+    closeDetail();
+    if (returnView === "section" && currentSectionPreset) {
+      $("browseView").classList.add("hidden");
+      $("searchView").classList.add("hidden");
+      $("bookmarksView").classList.add("hidden");
+      $("scheduleView").classList.add("hidden");
+      if (showSectionPage()) {
+        setActiveTab("home");
+        return;
+      }
+      // fall through to home if section no longer valid
+    }
+    if (returnView === "schedule") {
+      $("sectionView").classList.add("hidden");
+      $("searchView").classList.add("hidden");
+      $("bookmarksView").classList.add("hidden");
+      $("browseView").classList.add("hidden");
+      $("scheduleView").classList.remove("hidden");
+      setActiveTab("schedule");
+      renderSchedule();
+    } else if (returnView === "search") {
+      $("sectionView").classList.add("hidden");
+      $("scheduleView").classList.add("hidden");
+      $("browseView").classList.add("hidden");
+      $("bookmarksView").classList.add("hidden");
+      $("searchView").classList.remove("hidden");
+      setActiveTab("search");
+      renderSearchGrid();
+    } else if (returnView === "bookmarks") {
+      $("sectionView").classList.add("hidden");
+      $("scheduleView").classList.add("hidden");
+      $("browseView").classList.add("hidden");
+      $("searchView").classList.add("hidden");
+      $("bookmarksView").classList.remove("hidden");
+      setActiveTab("watchlist");
+      renderBookmarks();
+    } else {
+      $("sectionView").classList.add("hidden");
+      $("scheduleView").classList.add("hidden");
+      $("searchView").classList.add("hidden");
+      $("bookmarksView").classList.add("hidden");
+      $("browseView").classList.remove("hidden");
+      setActiveTab("home");
+      renderBannerTicker();
+      renderGrid();
+    }
+  }
+
+  function goHome() {
+    closeDetail();
+    closeSectionPage();
+    returnView = "browse";
+    $("scheduleView").classList.add("hidden");
+    $("sectionView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("browseView").classList.remove("hidden");
+    setActiveTab("home");
+    renderBannerTicker();
+    renderGrid();
+  }
+
+  function setWatchlistOnly(on) {
+    state.watchlistOnly = on;
+    state.shown = PAGE;
+    var toggleEl = $("watchlistToggle");
+    if (toggleEl) {
+      toggleEl.textContent = on ? "Show all titles" : "Show watchlist";
+      toggleEl.classList.toggle("active", on);
+    }
+    setActiveTab("home");
+    syncRailsVisibility();
+    renderGrid();
+  }
+
+  /* Each bottom tab opens its own page. Home is browseView exactly as
+     before; Search, Bookmarks, and Schedule each show only their own
+     section and hide every other main view. */
+  function showSearchPage() {
+    returnView = "search";
+    closeSectionPage();
+    if (!$("showDetail").classList.contains("hidden") || !$("episodeView").classList.contains("hidden")) { closeDetail(); }
+    $("browseView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("scheduleView").classList.add("hidden");
+    $("sectionView").classList.add("hidden");
+    $("searchView").classList.remove("hidden");
+    setActiveTab("search");
+    renderSearchGrid();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(function () { var inp = $("searchPageInput"); if (inp) { inp.focus({ preventScroll: true }); } }, 350);
+  }
+
+  function showBookmarksPage() {
+    returnView = "bookmarks";
+    closeSectionPage();
+    if (!$("showDetail").classList.contains("hidden") || !$("episodeView").classList.contains("hidden")) { closeDetail(); }
+    $("browseView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("scheduleView").classList.add("hidden");
+    $("sectionView").classList.add("hidden");
+    $("bookmarksView").classList.remove("hidden");
+    setActiveTab("watchlist");
+    renderBookmarks();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showSchedulePage() {
+    if (!$("showDetail").classList.contains("hidden") || !$("episodeView").classList.contains("hidden")) { closeDetail(); }
+    closeSectionPage();
+    returnView = "schedule";
+    $("browseView").classList.add("hidden");
+    $("searchView").classList.add("hidden");
+    $("bookmarksView").classList.add("hidden");
+    $("sectionView").classList.add("hidden");
+    $("scheduleView").classList.remove("hidden");
+    setActiveTab("schedule");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    loadSchedule(false);
+  }
+
+  function focusSearch() {
+    showSearchPage();
+  }
+
+  /* ---------- schedule ---------- */
+  /* The Schedule tab mirrors the Mizuki broadcast calendar: a Mon-Sun
+     week strip with per-day show counts, a poster grid for the selected
+     day, an All / My List filter, and countdowns to each airing.
+     Like Latest Episodes, it is snapshot-driven: assets/data/schedule.json
+     is baked at build time from the AniKoto API's published next-air
+     slots (next_air_schedule_time + next_air_ep for each currently
+     airing catalog title, placed on this week's Mon-Sun grid), and it
+     refreshes when the app is rebuilt. The earlier live AniList chart
+     never loaded inside the app (AniList blocks the app's network and
+     its block page has no CORS headers, so the tab sat empty), so
+     there is no live call anymore: the tab reads the saved snapshot
+     with no-store, and Refresh simply re-reads that file. Air times
+     render in the viewer's own timezone from the unix timestamps. */
+
+  var returnView = "browse";
+  var sched = {
+    items: [], source: null, fetchedAt: null,
+    loading: false, loaded: false, selected: -1, filter: "all"
+  };
+  var schedAlMap = null, schedMalMap = null;
+  var CLOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  var DOW_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var DOW_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  var FORMAT_LABELS = { TV: "TV", TV_SHORT: "TV Short", MOVIE: "Movie", ONA: "ONA", OVA: "OVA", SPECIAL: "Special", MUSIC: "Music", CM: "CM", PV: "PV" };
+
+  function setActiveTab(name) {
+    $("tabHome").classList.toggle("on", name === "home");
+    $("tabSearch").classList.toggle("on", name === "search");
+    $("tabWatchlist").classList.toggle("on", name === "watchlist");
+    $("tabSchedule").classList.toggle("on", name === "schedule");
+  }
+
+  function schedWeekDays() {
+    var now = new Date();
+    var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    mon.setDate(mon.getDate() - ((now.getDay() + 6) % 7));
+    var days = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate());
+      d.setDate(mon.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  }
+
+  function todayIndexIn(days) {
+    var now = new Date();
+    for (var i = 0; i < days.length; i++) {
+      var d = days[i];
+      if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()) { return i; }
+    }
+    return (now.getDay() + 6) % 7;
+  }
+
+  function itemsForDay(dayDate) {
+    var start = dayDate.getTime(), end = start + 86400000;
+    return sched.items.filter(function (it) {
+      var t = it.at * 1000;
+      return t >= start && t < end;
+    }).sort(function (a, b) { return a.at - b.at; });
+  }
+
+  function fmtTimeOfDay(unix) {
+    return new Date(unix * 1000).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  }
+
+  function countdownLabel(at) {
+    var diff = at * 1000 - Date.now();
+    if (diff <= 0) { return "Aired"; }
+    var mins = Math.floor(diff / 60000);
+    if (mins < 60) { return "in " + Math.max(mins, 1) + "m"; }
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) {
+      var rm = mins % 60;
+      return "in " + hrs + "h" + (rm ? " " + rm + "m" : "");
+    }
+    var days = Math.floor(hrs / 24), rh = hrs % 24;
+    return "in " + days + "d" + (rh ? " " + rh + "h" : "");
+  }
+
+  function matchedEntry(item) {
+    if (!catalog.length) { return null; }
+    if (!schedAlMap) {
+      schedAlMap = {}; schedMalMap = {};
+      catalog.forEach(function (e) {
+        if (e.al != null && !schedAlMap[e.al]) { schedAlMap[e.al] = e; }
+        if (e.mal != null && !schedMalMap[e.mal]) { schedMalMap[e.mal] = e; }
+      });
+    }
+    if (item.al != null && schedAlMap[item.al]) { return schedAlMap[item.al]; }
+    if (item.mal != null && schedMalMap[item.mal]) { return schedMalMap[item.mal]; }
+    return null;
+  }
+
+  function loadSchedule(force) {
+    if (sched.loading) { return; }
+    if (sched.loaded && !force) { renderSchedule(); return; }
+    sched.loading = true;
+    renderSchedule();
+    fetch("assets/data/schedule.json", { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) { throw new Error("schedule.json " + r.status); }
+        return r.json();
+      })
+      .then(function (data) {
+        var items = (data && Array.isArray(data.items)) ? data.items : [];
+        if (items.length) {
+          sched.items = items;
+          sched.source = "snapshot";
+          sched.fetchedAt = data.fetched_at ? new Date(data.fetched_at) : null;
+          sched.loaded = true;
+        } else if (!sched.items.length) {
+          sched.items = [];
+          sched.source = "error";
+          sched.loaded = false;
+        }
+      })
+      .catch(function () {
+        /* A failed re-read keeps the chart already on screen. */
+        if (!sched.items.length) {
+          sched.source = "error";
+          sched.loaded = false;
+        }
+      })
+      .then(function () {
+        sched.loading = false;
+        renderSchedule();
+      });
+  }
+
+  function setSchedFilter(f) {
+    sched.filter = f;
+    $("schedFilterAll").classList.toggle("on", f === "all");
+    $("schedFilterMine").classList.toggle("on", f === "mine");
+    renderSchedule();
+  }
+
+  function schedCard(item) {
+    var entry = matchedEntry(item);
+    var key = entry ? keyOf(entry.p, entry.id) : null;
+    var title = item.t || "Untitled";
+    var initial = title.replace(/^[^A-Za-z0-9]+/, "").charAt(0).toUpperCase() || "A";
+    var url = item.poster || (entry ? posterFor(entry) : null);
+    var img = url
+      ? '<img class="poster-img" src="' + escapeHtml(url) + '" alt="" loading="lazy" ' +
+        'onerror="this.parentNode.classList.remove(\'has-art\'); this.remove();">'
+      : "";
+    var pct = item.sc != null
+      ? '<span class="score-chip tr"><span class="star">&#9733;</span>' + Math.round(item.sc) + "%</span>"
+      : "";
+    var aired = item.at * 1000 <= Date.now();
+    var airChip = '<span class="air-chip' + (aired ? " aired" : "") + '">' + CLOCK_SVG +
+      (aired ? "Aired" : escapeHtml(countdownLabel(item.at))) + "</span>";
+    var bm = key
+      ? '<button type="button" class="bm-btn br' + (watchlist[key] ? " in-list" : "") + '" data-key="' + escapeHtml(key) +
+        '" aria-label="' + (watchlist[key] ? "Remove from watchlist" : "Add to watchlist") + '">' + BOOKMARK_SVG + "</button>"
+      : "";
+    var meta = fmtTimeOfDay(item.at) + (item.fmt ? " \u00B7 " + (FORMAT_LABELS[item.fmt] || item.fmt) : "");
+    return '<article class="pcard scard' + (key ? "" : " notincat") + '"' +
+      (key ? ' data-key="' + escapeHtml(key) + '"' : "") + ">" +
+      '<div class="poster' + (url ? " has-art" : "") + '" style="--h:' + hueFor(title + "sched") + '" data-initial="' + escapeHtml(initial) + '">' +
+      img +
+      '<span class="ep-chip">Ep ' + item.ep + "</span>" + pct + airChip + bm +
+      '<div class="poster-title">' + escapeHtml(title) + "</div>" +
+      "</div>" +
+      "<h3>" + escapeHtml(title) + "</h3>" +
+      '<p class="pmeta">' + escapeHtml(meta) + "</p>" +
+      (key ? "" : '<p class="pmeta nc-label">Not in the catalog</p>') +
+      "</article>";
+  }
+
+  function wireScheduleCards(scope) {
+    scope.querySelectorAll(".scard").forEach(function (card) {
+      card.addEventListener("click", function (ev) {
+        if (ev.target && ev.target.closest && ev.target.closest(".bm-btn")) { return; }
+        var k = card.getAttribute("data-key");
+        if (k) { openShow(k); }
+      });
+    });
+    scope.querySelectorAll(".bm-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var k = btn.getAttribute("data-key");
+        if (watchlist[k]) { delete watchlist[k]; } else { watchlist[k] = true; }
+        syncWatchlistUi();
+        if (state.currentKey === k) { syncDetailWatchBtn(); }
+        if (sched.filter === "mine") { renderSchedule(); }
+      });
+    });
+  }
+
+  function renderSchedule() {
+    var days = schedWeekDays();
+    if (sched.selected < 0) { sched.selected = todayIndexIn(days); }
+    var tIdx = todayIndexIn(days);
+
+    var label = $("schedSource");
+    if (sched.loading) {
+      label.textContent = "Loading this week's saved schedule...";
+    } else if (sched.source === "snapshot") {
+      label.textContent = "Saved schedule" + (sched.fetchedAt && !isNaN(sched.fetchedAt.getTime())
+        ? " \u00B7 Saved " + sched.fetchedAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
+          ", " + sched.fetchedAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+        : "") + " \u00B7 Refreshes with app updates";
+    } else if (sched.source === "error") {
+      label.textContent = "The saved schedule could not be loaded.";
+    } else {
+      label.textContent = "";
+    }
+
+    $("schedDays").innerHTML = days.map(function (d, i) {
+      var count = itemsForDay(d).length;
+      var countTxt = (sched.loading && !sched.items.length)
+        ? "\u2026"
+        : count + (count === 1 ? " show" : " shows");
+      var dow = i === tIdx ? "Today" : DOW_SHORT[i];
+      return '<button type="button" class="sched-day' + (i === sched.selected ? " sel" : "") +
+        '" data-idx="' + i + '" aria-pressed="' + (i === sched.selected ? "true" : "false") + '">' +
+        '<span class="sd-dow">' + dow + '</span>' +
+        '<span class="sd-num">' + d.getDate() + '</span>' +
+        '<span class="sd-count">' + countTxt + "</span></button>";
+    }).join("");
+    $("schedDays").querySelectorAll(".sched-day").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        sched.selected = Number(btn.getAttribute("data-idx"));
+        renderSchedule();
+      });
+    });
+
+    var day = days[sched.selected];
+    var isToday = sched.selected === tIdx;
+    $("schedDayTitle").textContent = (isToday ? "Today" : DOW_FULL[sched.selected]) +
+      " \u2022 " + (day.getMonth() + 1) + "/" + day.getDate() + "/" + day.getFullYear();
+    $("schedLive").classList.toggle("hidden", !isToday);
+
+    var all = itemsForDay(day);
+    var items = sched.filter === "mine"
+      ? all.filter(function (it) {
+          var e = matchedEntry(it);
+          return e && watchlist[keyOf(e.p, e.id)];
+        })
+      : all;
+    $("schedDayCount").textContent = (sched.loading && !sched.items.length)
+      ? "Loading..."
+      : items.length + (items.length === 1 ? " show" : " shows");
+
+    var body = $("schedBody");
+    if (sched.loading && !sched.items.length) {
+      body.innerHTML = '<p class="loading">Loading this week\'s saved schedule...</p>';
+      return;
+    }
+    if (sched.source === "error") {
+      body.innerHTML = '<div class="empty"><strong>The schedule couldn\'t be loaded.</strong><br>' +
+        "The saved schedule file didn\'t answer, so there are no times to show rather than invented ones. " +
+        'Check your connection and try again.<br><br><button type="button" class="secondary" id="schedRetryBtn">Retry</button></div>';
+      $("schedRetryBtn").addEventListener("click", function () { loadSchedule(true); });
+      return;
+    }
+    if (!items.length) {
+      body.innerHTML = '<div class="empty">' + (sched.filter === "mine"
+        ? "Nothing from your watchlist airs this day. Tap All to see the full chart, or add titles with the bookmark button on any poster."
+        : "Nothing on the saved chart for this day.") + "</div>";
+      return;
+    }
+    body.innerHTML = '<div class="sched-grid">' + items.map(schedCard).join("") + "</div>";
+    wireScheduleCards(body);
+  }
+
+  /* ---------- init ---------- */
+
+  function init() {
+    // Restore Continue Watching from this device before the first
+    // render, so a returning reader sees their last 10 right away.
+    loadWatchHistory();
+    renderRails();
+    renderGrid();
+    renderSearchGrid();
+    renderBookmarks();
+    // Latest Episodes loads on every launch from the saved snapshot
+    // file (see loadLatest); Refresh re-reads the same file.
+    loadLatest();
+    renderBannerTicker();
+    $("tickerClearBtn").addEventListener("click", function () {
+      clearWatchHistory();
+    });
+    /* Banner carousel controls: arrows move one show, hover or focus
+       pauses auto-advance, and a horizontal swipe moves on touch. */
+    $("cwPrevBtn").addEventListener("click", function () { cwGo(cwIndex - 1, true); });
+    $("cwNextBtn").addEventListener("click", function () { cwGo(cwIndex + 1, true); });
+    var cwStageEl = $("cwStage");
+    if (cwStageEl) {
+      cwStageEl.addEventListener("mouseenter", cwStopAuto);
+      cwStageEl.addEventListener("mouseleave", cwStartAuto);
+      cwStageEl.addEventListener("focusin", cwStopAuto);
+      cwStageEl.addEventListener("focusout", cwStartAuto);
+      var cwTouchX = null;
+      cwStageEl.addEventListener("touchstart", function (ev) {
+        cwTouchX = ev.changedTouches && ev.changedTouches.length ? ev.changedTouches[0].clientX : null;
+      }, { passive: true });
+      cwStageEl.addEventListener("touchend", function (ev) {
+        if (cwTouchX == null || !ev.changedTouches || !ev.changedTouches.length) { return; }
+        var dx = ev.changedTouches[0].clientX - cwTouchX;
+        cwTouchX = null;
+        if (Math.abs(dx) < 42) { return; }
+        cwGo(cwIndex + (dx < 0 ? 1 : -1), true);
+      }, { passive: true });
+    }
+    $("latestRefreshBtn").addEventListener("click", function () { loadLatest(); });
+    $("latestSeeAll").addEventListener("click", function () { openSectionPage("latest"); });
+    $("sectionBackBtn").addEventListener("click", function () { goHome(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+    $("sectionMoreBtn").addEventListener("click", function () { sectionShown += PAGE; renderSectionGrid(); });
+    $("backButton").addEventListener("click", showBrowse);
+    $("detailWatchBtn").addEventListener("click", function () {
+      if (!state.currentKey) { return; }
+      if (watchlist[state.currentKey]) { delete watchlist[state.currentKey]; }
+      else { watchlist[state.currentKey] = true; }
+      syncDetailWatchBtn();
+      syncWatchlistUi();
+    });
+    $("detailHeartBtn").addEventListener("click", function () { $("detailWatchBtn").click(); });
+    $("watchPrimaryBtn").addEventListener("click", function () {
+      if (state.primaryEp != null) { playEpisode(state.primaryEp); }
+    });
+    $("dtabOverview").addEventListener("click", function () { setDetailTab("overview"); });
+    $("dtabEpisodes").addEventListener("click", function () { setDetailTab("episodes"); });
+    $("dtabDetails").addEventListener("click", function () { setDetailTab("details"); });
+    $("dtabMore").addEventListener("click", function () { setDetailTab("more"); });
+    $("detailShareBtn").addEventListener("click", shareCurrentTitle);
+    $("detailSourceBtn").addEventListener("click", function () {
+      if (state.currentEntry && state.currentEntry.u) { window.open(state.currentEntry.u, "_blank", "noopener"); }
+    });
+    function exitPlayerToShow() {
+      destroyHls();
+      vpSetMode("none");
+      $("playerArea").innerHTML = '<div class="player-note">Pick an episode below to play it.</div>';
+      $("playerNote").textContent = "";
+      closeEpisodeView();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    $("epvBackBtn").addEventListener("click", exitPlayerToShow);
+    $("vpEmbedBackBtn").addEventListener("click", exitPlayerToShow);
+    var epvHeartBtn = $("epvHeartBtn");
+    if (epvHeartBtn) {
+      epvHeartBtn.addEventListener("click", function () { $("detailWatchBtn").click(); });
+    }
+    /* ----- custom player chrome bindings ----- */
+    $("vpBtnPlay").addEventListener("click", function () { vpTogglePlay(); vpScheduleHide(); });
+    $("vpBtnBack10").addEventListener("click", function () {
+      if (vpVideo) { vpVideo.currentTime = Math.max(0, vpVideo.currentTime - 10); vpPaintSeek(); }
+      vpShowChrome(); vpScheduleHide();
+    });
+    $("vpBtnFwd10").addEventListener("click", function () {
+      if (vpVideo) {
+        var d = vpVideo.duration;
+        vpVideo.currentTime = isFinite(d) && d > 0 ? Math.min(d, vpVideo.currentTime + 10) : vpVideo.currentTime + 10;
+        vpPaintSeek();
+      }
+      vpShowChrome(); vpScheduleHide();
+    });
+    $("vpBtnSkip85").addEventListener("click", function () {
+      if (vpVideo) {
+        var d2 = vpVideo.duration;
+        vpVideo.currentTime = isFinite(d2) && d2 > 0 ? Math.min(d2, vpVideo.currentTime + 85) : vpVideo.currentTime + 85;
+        vpPaintSeek();
+        vpToast("Skipped ahead 85 seconds.");
+      }
+      vpShowChrome(); vpScheduleHide();
+    });
+    $("vpSeek").addEventListener("input", function (ev) {
+      if (!vpVideo) { return; }
+      var dur = vpVideo.duration || 0;
+      if (dur > 0) {
+        vpVideo.currentTime = (Number(ev.target.value) / 1000) * dur;
+        vpPaintSeek();
+      }
+    });
+    $("vpBtnVol").addEventListener("click", function () {
+      if (!vpVideo) { return; }
+      vpVideo.muted = !vpVideo.muted;
+      $("vpBtnVol").classList.toggle("off", vpVideo.muted);
+      vpToast(vpVideo.muted ? "Muted." : "Sound on.");
+    });
+    $("vpBtnPip").addEventListener("click", function () {
+      if (vpVideo && vpVideo.requestPictureInPicture && document.pictureInPictureEnabled) {
+        if (document.pictureInPictureElement) { document.exitPictureInPicture().catch(function () {}); }
+        else {
+          vpVideo.requestPictureInPicture().catch(function () {
+            vpToast("Picture in picture is not available for this stream.");
+          });
+        }
+      } else {
+        vpToast("Picture in picture is not available for this stream.");
+      }
+    });
+    $("vpBtnCast").addEventListener("click", function () {
+      vpToast("Casting is not built into this player. Use your browser or device cast menu instead.");
+    });
+    $("vpBtnReport").addEventListener("click", function () {
+      vpToast("Playback stalled? Embedded streams expire after about 90 seconds, reopen the episode to reload it, or open the source page from More, Settings below.");
+    });
+    $("vpBtnSubs").addEventListener("click", vpToggleCaptions);
+    $("vpBtnCC").addEventListener("click", vpToggleCaptions);
+    $("vpBtnSettings").addEventListener("click", function () {
+      $("epvCtlMore").click();
+      $("epvSettings").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    $("vpBtnEpisodes").addEventListener("click", function () {
+      var head = document.querySelector("#episodeView .epv-head");
+      if (head) { head.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    });
+    $("vpBtnPrev").addEventListener("click", function () { $("epvPrevBtn").click(); });
+    $("vpBtnNext").addEventListener("click", function () { $("epvNextBtn").click(); });
+    $("vpBtnComments").addEventListener("click", function () {
+      $("epvCommentsBtn").click();
+      $("epvFeedback").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+    $("vpBtnSave").addEventListener("click", function () { $("detailWatchBtn").click(); });
+    $("vpBtnFs").addEventListener("click", vpFullscreen);
+    $("vpBtnLock").addEventListener("click", function () {
+      vpLocked = true;
+      $("vpStage").classList.add("vp-locked");
+      $("vpShowBtn").classList.add("hidden");
+      $("vpUnlockBtn").classList.remove("hidden");
+      clearTimeout(vpHideTimer);
+    });
+    $("vpUnlockBtn").addEventListener("click", function () {
+      if (!vpIsNative()) { return; }
+      vpLocked = false;
+      $("vpStage").classList.remove("vp-locked");
+      $("vpUnlockBtn").classList.add("hidden");
+      vpShowChrome();
+      vpScheduleHide();
+    });
+    $("vpShowBtn").addEventListener("click", function () {
+      if (!vpIsNative()) { return; }
+      $("vpShowBtn").classList.add("hidden");
+      vpShowChrome();
+      vpScheduleHide();
+    });
+    /* Stage pointer handlers only drive the native chrome. In embed mode
+       they do nothing at all, so a tap on the stage can never resurrect
+       an overlay over the iframe. */
+    $("vpStage").addEventListener("mousemove", function () {
+      if (vpLocked || !vpIsNative()) { return; }
+      vpShowChrome();
+      vpScheduleHide();
+    });
+    $("vpStage").addEventListener("touchstart", function () {
+      if (vpLocked || !vpIsNative()) { return; }
+      vpShowChrome();
+      vpScheduleHide();
+    }, { passive: true });
+    $("epvSaveBtn").addEventListener("click", function () { $("detailWatchBtn").click(); });
+    $("epvPrevBtn").addEventListener("click", function () {
+      var eps = state.currentShow ? (state.currentShow.eps || []) : [];
+      var idx = epIndexOf(state.currentEpisode);
+      if (idx > 0) { playEpisode(eps[idx - 1][0]); }
+    });
+    $("epvNextBtn").addEventListener("click", function () {
+      var eps = state.currentShow ? (state.currentShow.eps || []) : [];
+      var idx = epIndexOf(state.currentEpisode);
+      if (idx >= 0 && idx < eps.length - 1) { playEpisode(eps[idx + 1][0]); }
+    });
+    $("epvShareBtn").addEventListener("click", shareCurrentTitle);
+    $("epvCommentsBtn").addEventListener("click", function () {
+      var fb = $("epvFeedback");
+      var open = fb.classList.contains("hidden");
+      if (open) {
+        fb.innerHTML = "Comments are not available for episodes in this archive. " +
+          "Use Save to keep this show in your watchlist instead.";
+        fb.classList.remove("hidden");
+      } else {
+        fb.classList.add("hidden");
+        fb.innerHTML = "";
+      }
+      $("epvCommentsBtn").setAttribute("aria-expanded", open ? "true" : "false");
+      $("epvCommentsBtn").classList.toggle("on", open);
+    });
+    $("epvDownloadBtn").addEventListener("click", function () {
+      var ep = currentEpRecord();
+      var fb = $("epvFeedback");
+      if (!ep) { return; }
+      var url = state.audio === "dub" ? (ep[3] || ep[2]) : ep[2];
+      if (url && isDirectFile(url)) {
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "";
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+      var src = ep[4] || (state.currentEntry && state.currentEntry.u) || "";
+      fb.innerHTML = "This episode plays as an embedded stream, so there is no file to download here." +
+        (src ? ' Get it from the <a href="' + escapeHtml(src) + '" target="_blank" rel="noopener">source page</a> instead.' : "");
+      fb.classList.remove("hidden");
+    });
+    $("epvCtlMore").addEventListener("click", function () {
+      var panel = $("epvSettings");
+      var open = panel.classList.toggle("hidden") === false;
+      $("epvCtlMore").setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    $("epvSetSub").addEventListener("click", function () { setAudio("sub"); });
+    $("epvSetDub").addEventListener("click", function () { setAudio("dub"); });
+    $("epvSetSource").addEventListener("click", openSourceForCurrentEp);
+    $("epvCtlAudio").addEventListener("click", function () {
+      setAudio(state.audio === "dub" ? "sub" : "dub");
+    });
+    $("epvSearchInput").addEventListener("input", function (ev) {
+      state.epvQuery = ev.target.value;
+      renderEpvList();
+    });
+    $("epvRangeSelect").addEventListener("change", function (ev) {
+      state.epvRange = Number(ev.target.value) || 0;
+      renderEpvList();
+    });
+    $("audioSubBtn").addEventListener("click", function () { setAudio("sub"); });
+    $("audioDubBtn").addEventListener("click", function () { setAudio("dub"); });
+    $("topSearchBtn").addEventListener("click", focusSearch);
+    $("tabSearch").addEventListener("click", focusSearch);
+    $("tabHome").addEventListener("click", function () {
+      goHome();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    $("tabWatchlist").addEventListener("click", function () {
+      showBookmarksPage();
+    });
+    $("tabSchedule").addEventListener("click", function () {
+      showSchedulePage();
+    });
+    /* Search page controls: independent from the Home browse controls. */
+    var searchDebounce = null;
+    $("searchPageInput").addEventListener("input", function (ev) {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(function () {
+        searchState.query = ev.target.value;
+        searchState.shown = PAGE;
+        renderSearchGrid();
+      }, 160);
+    });
+    $("searchStatusFilter").addEventListener("change", function (ev) {
+      searchState.status = ev.target.value; searchState.shown = PAGE; renderSearchGrid();
+    });
+    $("searchGenreFilter").addEventListener("change", function (ev) {
+      searchState.genre = ev.target.value; searchState.shown = PAGE; renderSearchGrid();
+    });
+    $("searchSortSelect").addEventListener("change", function (ev) {
+      searchState.sort = ev.target.value; searchState.shown = PAGE; renderSearchGrid();
+    });
+    $("searchMoreBtn").addEventListener("click", function () {
+      searchState.shown += PAGE;
+      renderSearchGrid();
+    });
+    /* Hide the floating tab bar while scrolling down so it never stays
+       parked over controls near the bottom of the screen (poster
+       bookmarks especially); it returns on any scroll up, and always
+       shows near the top of the page. */
+    var tabbarEl = document.querySelector(".tabbar");
+    if (tabbarEl) {
+      var lastScrollY = window.scrollY || 0, scrollTicking = false;
+      window.addEventListener("scroll", function () {
+        if (scrollTicking) { return; }
+        scrollTicking = true;
+        window.requestAnimationFrame(function () {
+          scrollTicking = false;
+          var y = window.scrollY || 0;
+          if (y <= 80 || y < lastScrollY - 4) { tabbarEl.classList.remove("bar-hidden"); }
+          else if (y > lastScrollY + 6) { tabbarEl.classList.add("bar-hidden"); }
+          lastScrollY = y;
+        });
+      }, { passive: true });
+    }
+    $("schedRefreshBtn").addEventListener("click", function () { loadSchedule(true); });
+    $("schedFilterAll").addEventListener("click", function () { setSchedFilter("all"); });
+    $("schedFilterMine").addEventListener("click", function () { setSchedFilter("mine"); });
+    setInterval(function () {
+      if (!$("scheduleView").classList.contains("hidden") && sched.items.length) { renderSchedule(); }
+    }, 60000);
+    // Warm the schedule in the background so the tab opens instantly.
+    // It only reads the app's own saved snapshot file, so the short
+    // delay is just to keep launch work sequential.
+    setTimeout(function () { loadSchedule(false); }, 1500);
+
+    loadPosters();
+    fetchJson("assets/data/genres.json").then(function (data) {
+      var raw = data || {};
+      Object.keys(raw).forEach(function (k) { genreIndex[k] = parseListField(raw[k]); });
+      renderGenreOptions();
+      if (catalog.length) { renderGrid(); renderSearchGrid(); }
+    }).catch(function () { /* genre filter stays on "All genres" */ });
+    catalogPromise = fetchJson("assets/data/catalog.json").then(function (data) {
+      catalog = Array.isArray(data) ? data : [];
+      $("topCount").textContent = catalog.length.toLocaleString() + " titles \u00B7 6 sources";
+      renderStatusOptions();
+      renderRails();
+      renderGrid();
+      renderSearchGrid();
+      renderBookmarks();
+      if (currentSectionPreset && !$("sectionView").classList.contains("hidden")) {
+        currentSectionItems = sectionItemsFor(currentSectionPreset);
+        renderSectionGrid();
+      }
+      if (sched.items.length) { renderSchedule(); }
+    }).catch(function () {
+      var sc = $("searchResultCount"); if (sc) { sc.textContent = "The catalog file could not be loaded."; }
+      var sg = $("searchGrid"); if (sg) { sg.innerHTML = '<div class="empty"><strong>Catalog failed to load.</strong><br>Reload the page to try again.</div>'; }
+      $("rails").innerHTML = "";
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,826 @@
+{
+ "fetched_at": "2026-11-17T13:29:37Z",
+ "source": "AniKoto API /recent-anime next_air_schedule_time + next_air_ep (weekly broadcast slots, week of Mon Nov 16 - Sun Nov 22, 2026), snapshot baked at build time",
+ "items": [
+  {
+   "al": 207191,
+   "mal": 63409,
+   "t": "Hello, I Am a Witch and My Crush Wants Me to Make a Love Potion!",
+   "ep": 7,
+   "at": 1794832200,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/f9a31c4724b11c55035ad8ad8b3ab900.jpg",
+   "sc": 73,
+   "fmt": "TV"
+  },
+  {
+   "al": 209219,
+   "mal": 63712,
+   "t": "So What's Wrong with Getting Reborn as a Goblin?",
+   "ep": 7,
+   "at": 1794834000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/4213e1e10e0dac150c03d344ac3bd930.jpg",
+   "sc": 68,
+   "fmt": "TV"
+  },
+  {
+   "al": 204011,
+   "mal": 63098,
+   "t": "Psyren",
+   "ep": 6,
+   "at": 1794837600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/c55a26472f8223cd7717aa736f09dffc.jpg",
+   "sc": 71,
+   "fmt": "TV"
+  },
+  {
+   "al": 160803,
+   "mal": 54344,
+   "t": "Mahou Shoujo Ikusei Keikaku: Restart",
+   "ep": 7,
+   "at": 1794848400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/450fa8c229cb0c4caf6bd73c427d3244.jpg",
+   "sc": 65,
+   "fmt": "TV"
+  },
+  {
+   "al": 206949,
+   "mal": 63382,
+   "t": "Nia Liston: The Merciless Maiden",
+   "ep": 7,
+   "at": 1794918360,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/6f97bd031372be8c00d3d9e1fde8d0c0.jpg",
+   "sc": 76,
+   "fmt": "TV"
+  },
+  {
+   "al": 209502,
+   "mal": 63754,
+   "t": "The Cold Sato-san is Only Sweet to Me",
+   "ep": 7,
+   "at": 1794920400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/02298d18144376a34add88e610a2ddb8.jpg",
+   "sc": 68,
+   "fmt": "TV"
+  },
+  {
+   "al": 198727,
+   "mal": 62484,
+   "t": "Chitose Is in the Ramune Bottle Part 2",
+   "ep": 6,
+   "at": 1794924000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/752bf884d2e0a73fc1724e791556e296.jpg",
+   "sc": 70,
+   "fmt": "TV"
+  },
+  {
+   "al": 187990,
+   "mal": 63818,
+   "t": "Battle Spirits [Re] Zekkai No Ku",
+   "ep": 7,
+   "at": 1794924000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/af2d4b6644dc7ab41135c9f49374f240.jpg",
+   "sc": 56,
+   "fmt": "TV"
+  },
+  {
+   "al": 200294,
+   "mal": 62696,
+   "t": "Super Psychic Policeman Chojo",
+   "ep": 7,
+   "at": 1794924000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/042fe99fcbab458c65037cadd8f1e8d3.jpg",
+   "sc": 68,
+   "fmt": "TV"
+  },
+  {
+   "al": 187316,
+   "mal": 61140,
+   "t": "Suikoden: The Anime",
+   "ep": 7,
+   "at": 1794925800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/85e2607d8082169efb15448bb40acbb5.jpg",
+   "sc": 68,
+   "fmt": "TV"
+  },
+  {
+   "al": 207329,
+   "mal": 63431,
+   "t": "The Laid-Off Cheat-Granting Mage Enjoys a Second Lease on Life",
+   "ep": 7,
+   "at": 1794927600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/4c778b6324a382693bf5ca3340f4505f.jpg",
+   "sc": 75,
+   "fmt": "TV"
+  },
+  {
+   "al": 207809,
+   "mal": 63489,
+   "t": "Red River",
+   "ep": 20,
+   "at": 1794933300,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/0b38a6bd6d52a84544abdf4734aeab5a.jpg",
+   "sc": 65,
+   "fmt": "TV"
+  },
+  {
+   "al": 179876,
+   "mal": 59415,
+   "t": "Dark Machine: The Animation",
+   "ep": 6,
+   "at": 1794933900,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/f2e34671e738f4f6359ff40c50da105c.jpg",
+   "sc": 59,
+   "fmt": "TV"
+  },
+  {
+   "al": 199409,
+   "mal": 62248,
+   "t": "Yi Nian Yongheng 4",
+   "ep": 20,
+   "at": 1794967200,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/2a0fcc99167ee868ff9f2d7c1b8870b5.jpg",
+   "sc": 75,
+   "fmt": "ONA"
+  },
+  {
+   "al": 152677,
+   "mal": 52480,
+   "t": "Tantei wa mou, Shindeiru. Season 2",
+   "ep": 7,
+   "at": 1795005000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/bfa3764945cfc2ff8d3da93634848a3b.jpg",
+   "sc": 72,
+   "fmt": "TV"
+  },
+  {
+   "al": 176314,
+   "mal": 58518,
+   "t": "Sasaki and Peeps Season 2",
+   "ep": 7,
+   "at": 1795006800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/25260ae2069ebf5261ab00d0a99fd8f3.jpg",
+   "sc": 72,
+   "fmt": "TV"
+  },
+  {
+   "al": 211778,
+   "mal": 64084,
+   "t": "The World's Strongest Witch",
+   "ep": 7,
+   "at": 1795006800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d6e4bb5cf08db0f4148209a3655e2b87.jpg",
+   "sc": 68,
+   "fmt": "TV"
+  },
+  {
+   "al": 178868,
+   "mal": 59204,
+   "t": "Magic Knight Rayearth (2026)",
+   "ep": 7,
+   "at": 1795013160,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/6fd4b38b6aee057a65bd24d989c16758.jpg",
+   "sc": 73,
+   "fmt": "TV"
+  },
+  {
+   "al": 199068,
+   "mal": 62534,
+   "t": "The Prince of Tennis II U-17 World Cup: Final Member Selection Match",
+   "ep": 8,
+   "at": 1795014000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/627c39def67ff4d3bea42e967031741f.jpg",
+   "sc": 66,
+   "fmt": "TV"
+  },
+  {
+   "al": 168085,
+   "mal": 60598,
+   "t": "White Cat Legend Season 3",
+   "ep": 6,
+   "at": 1795014000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/50e0abf297a14f0ff5e4f930b0186d13.jpg",
+   "sc": null,
+   "fmt": "ONA"
+  },
+  {
+   "al": 159042,
+   "mal": 53913,
+   "t": "Tensei Shitara Ken Deshita 2nd Season",
+   "ep": 8,
+   "at": 1795015800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/9aae782ce0bb85d118b47f327f502240.jpg",
+   "sc": 75,
+   "fmt": "TV"
+  },
+  {
+   "al": 213068,
+   "mal": 64344,
+   "t": "Juuou Mujin Dandivine",
+   "ep": 7,
+   "at": 1795015800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/1217257a72a30a5c916c6a52584d3ad4.jpg",
+   "sc": 56,
+   "fmt": "TV"
+  },
+  {
+   "al": 172192,
+   "mal": 57612,
+   "t": "A Returner's Magic Should be Special Season 2",
+   "ep": 7,
+   "at": 1795016700,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/c05089f9cc81d577aa5ffdc219f30b8a.jpg",
+   "sc": 67,
+   "fmt": "TV"
+  },
+  {
+   "al": 206401,
+   "mal": 63337,
+   "t": "FX Fighter Kurumi-chan",
+   "ep": 8,
+   "at": 1795091400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/bf9560c068acb95a7a35efe1eca3135f.jpg",
+   "sc": 73,
+   "fmt": "TV"
+  },
+  {
+   "al": 213805,
+   "mal": 64534,
+   "t": "The Ramparts of Ice Season 2",
+   "ep": 8,
+   "at": 1795100160,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/b6ae71493beee188609a8cceeb22e5f1.jpg",
+   "sc": 84,
+   "fmt": "TV"
+  },
+  {
+   "al": 212144,
+   "mal": 64180,
+   "t": "With Vengeance, Sincerely, Your Broken Saintess Season 2",
+   "ep": 8,
+   "at": 1795100400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d95ad7f89ae0b5ad8b294a8bb7c78013.jpg",
+   "sc": 66,
+   "fmt": "TV"
+  },
+  {
+   "al": 199594,
+   "mal": 62615,
+   "t": "Tetsuryou! Meet with Tetsudou Musume",
+   "ep": 7,
+   "at": 1795100400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/0b339f52163dff166982207c24a56cac.jpg",
+   "sc": 66,
+   "fmt": "TV"
+  },
+  {
+   "al": 180136,
+   "mal": 59741,
+   "t": "The Exiled Heavy Knight Knows How to Game the System",
+   "ep": 21,
+   "at": 1795101960,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/81d8f6bc61e91eeecbb1e08f767c475a.jpg",
+   "sc": 71,
+   "fmt": "TV"
+  },
+  {
+   "al": 212503,
+   "mal": 64254,
+   "t": "The Iceblade Sorcerer Shall Rule the World II",
+   "ep": 7,
+   "at": 1795105680,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/20346dad019e8ccda67ad24ebee17d3c.jpg",
+   "sc": 67,
+   "fmt": "TV"
+  },
+  {
+   "al": 210482,
+   "mal": 63825,
+   "t": "Steel Ball Run: JoJo's Bizarre Adventure 2nd Stage",
+   "ep": 9,
+   "at": 1795161600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/35e54cf5038f9c977d6b95227194eb97.jpg",
+   "sc": null,
+   "fmt": "ONA"
+  },
+  {
+   "al": 194207,
+   "mal": 62039,
+   "t": "Pan Dorobou",
+   "ep": 8,
+   "at": 1795167600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/fa053a3185c9b7154992fb4bffe11e76.jpg",
+   "sc": null,
+   "fmt": "TV"
+  },
+  {
+   "al": 158871,
+   "mal": 53876,
+   "t": "Pokémon Horizons: The Series",
+   "ep": 158,
+   "at": 1795168500,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/e41ca9097b60bdb7c752d6d8867781a8.jpg",
+   "sc": 74,
+   "fmt": "TV"
+  },
+  {
+   "al": 203275,
+   "mal": 63045,
+   "t": "Devils' Crest",
+   "ep": 4,
+   "at": 1795176000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/33d6899252d6eb3db0d9ee317aebeac4.jpg",
+   "sc": 66,
+   "fmt": "ONA"
+  },
+  {
+   "al": 216895,
+   "mal": 65009,
+   "t": "Aoki Denshou: Welsh & Shedar",
+   "ep": 8,
+   "at": 1795177560,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/f1fb6fb2df32343c7bf3fd58d6c0cbe4.jpg",
+   "sc": 64,
+   "fmt": "TV"
+  },
+  {
+   "al": 186742,
+   "mal": 61014,
+   "t": "A Certain Dark Item",
+   "ep": 7,
+   "at": 1795181400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/71163fc9dd94177cfe28ed434e69c0d2.jpg",
+   "sc": 74,
+   "fmt": "TV"
+  },
+  {
+   "al": 195516,
+   "mal": 61987,
+   "t": "The Apothecary Diaries Season 3",
+   "ep": 8,
+   "at": 1795183200,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/352f4a49c53bcbc7b40f1bbc934a7071.jpg",
+   "sc": 80,
+   "fmt": "TV"
+  },
+  {
+   "al": 204650,
+   "mal": 63181,
+   "t": "Tougen Anki: Nikko Kegon Falls Arc",
+   "ep": 8,
+   "at": 1795185000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/679086fef14f52d405102a5cbcf2467c.jpg",
+   "sc": 73,
+   "fmt": "TV"
+  },
+  {
+   "al": 205909,
+   "mal": 63293,
+   "t": "Firefly Wedding",
+   "ep": 7,
+   "at": 1795185000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/70f8fce29186a5ede9371feb0dc51a8e.jpg",
+   "sc": 79,
+   "fmt": "TV"
+  },
+  {
+   "al": 203490,
+   "mal": 63061,
+   "t": "Sorry About My Little Brothers",
+   "ep": 20,
+   "at": 1795186800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/7636db5cbb3b6efa377845c0aa28199d.jpg",
+   "sc": 70,
+   "fmt": "TV"
+  },
+  {
+   "al": 178083,
+   "mal": 59088,
+   "t": "Tokyo Revengers: War of the Three Titan Arc",
+   "ep": 8,
+   "at": 1795193580,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/2d0a34f50f23eb9b5c34ddc410bdd568.jpg",
+   "sc": 78,
+   "fmt": "TV"
+  },
+  {
+   "al": 183231,
+   "mal": 60153,
+   "t": "Rilakkuma",
+   "ep": 33,
+   "at": 1795220760,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/33c14ab38a8923e563e17b79e41693ba.jpg",
+   "sc": 61,
+   "fmt": "TV"
+  },
+  {
+   "al": 214260,
+   "mal": 61619,
+   "t": "A Good Day to Ascend",
+   "ep": 21,
+   "at": 1795222800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/6321e632b4d45f41040304ccb41fe14a.jpg",
+   "sc": 68,
+   "fmt": "ONA"
+  },
+  {
+   "al": 199353,
+   "mal": 60597,
+   "t": "Spare Me, Great Lord! Season 3",
+   "ep": 10,
+   "at": 1795226400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/8c6594d2d26eea0921bbed5007c3211a.jpg",
+   "sc": 73,
+   "fmt": "ONA"
+  },
+  {
+   "al": 195571,
+   "mal": 61999,
+   "t": "The Vermilion Mask",
+   "ep": 7,
+   "at": 1795249800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/7e61291d5f23dbec8ab7b2adf5562f13.jpg",
+   "sc": 71,
+   "fmt": "TV"
+  },
+  {
+   "al": 235,
+   "mal": 235,
+   "t": "Case Closed",
+   "ep": 1221,
+   "at": 1795251600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/bc6dc48b743dc5d013b1abaebd2faed2.jpg",
+   "sc": 82,
+   "fmt": "TV"
+  },
+  {
+   "al": 212799,
+   "mal": 64326,
+   "t": "The Seven Knights of the Marronnier Kingdom",
+   "ep": 8,
+   "at": 1795253100,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/c7d84ae0568e37cc77543ca7f8c5451d.jpg",
+   "sc": 64,
+   "fmt": "TV"
+  },
+  {
+   "al": 213356,
+   "mal": 64398,
+   "t": "Beyond Time's Gaze 2nd Season",
+   "ep": 23,
+   "at": 1795255200,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/4e12e8dce2f24686d78758270ff9e7d6.jpg",
+   "sc": 81,
+   "fmt": "ONA"
+  },
+  {
+   "al": 180894,
+   "mal": 59787,
+   "t": "Romelia War Chronicle",
+   "ep": 8,
+   "at": 1795262400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/09dd1f8c625c79cc593419420c21ef83.jpg",
+   "sc": 72,
+   "fmt": "TV"
+  },
+  {
+   "al": 187402,
+   "mal": 61153,
+   "t": "A Tale of the Secret Saint",
+   "ep": 9,
+   "at": 1795266000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/4ed8034d28f8e8082bbc361d9cfbb474.jpg",
+   "sc": 69,
+   "fmt": "TV"
+  },
+  {
+   "al": 204389,
+   "mal": 63140,
+   "t": "A Wild Last Boss Appeared! Season 2",
+   "ep": 9,
+   "at": 1795267800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d2c40040f2351d9c355630c2b4d44eb3.jpg",
+   "sc": 76,
+   "fmt": "TV"
+  },
+  {
+   "al": 195604,
+   "mal": 61967,
+   "t": "Black Clover Season 2",
+   "ep": 8,
+   "at": 1795269600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/e7093313bd18aab07f36fbb18a54fdf7.jpg",
+   "sc": 78,
+   "fmt": "TV"
+  },
+  {
+   "al": 214536,
+   "mal": 63938,
+   "t": "Cardfight!! Vanguard: Divinez Parallactic Fate",
+   "ep": 3,
+   "at": 1795271400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/4c32a8cd174fe4faa594af3449d8ff5f.jpg",
+   "sc": null,
+   "fmt": "TV"
+  },
+  {
+   "al": 209562,
+   "mal": 63764,
+   "t": "Vertex Force",
+   "ep": 8,
+   "at": 1795271400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/86972bfc68537795fe3503f6407bb35b.jpg",
+   "sc": 61,
+   "fmt": "TV"
+  },
+  {
+   "al": 199007,
+   "mal": 62524,
+   "t": "#I'm Looking For a Zombie",
+   "ep": 7,
+   "at": 1795271400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/7083cb21e7257ca11b805a9bf4f70be4.jpg",
+   "sc": 66,
+   "fmt": "TV"
+  },
+  {
+   "al": 203473,
+   "mal": 63053,
+   "t": "Horror Collector",
+   "ep": 7,
+   "at": 1795272300,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/8500cd4427ccbc38d536e34f1014924f.jpg",
+   "sc": 59,
+   "fmt": "TV"
+  },
+  {
+   "al": 169581,
+   "mal": 56733,
+   "t": "Magical★Explorer",
+   "ep": 9,
+   "at": 1795273200,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/8b33316019ed213719eb4f22151d08b1.jpg",
+   "sc": 58,
+   "fmt": "TV"
+  },
+  {
+   "al": 191656,
+   "mal": 61578,
+   "t": "Even the Student Council Has Its Holes!",
+   "ep": 8,
+   "at": 1795275000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/417b9a1db323983d0fc9248db739e882.jpg",
+   "sc": 77,
+   "fmt": "TV"
+  },
+  {
+   "al": 209872,
+   "mal": 63801,
+   "t": "Ranma ½ (2024) Season 3",
+   "ep": 8,
+   "at": 1795276560,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d64a2a16520922c28e3804df012c503e.jpg",
+   "sc": 79,
+   "fmt": "TV"
+  },
+  {
+   "al": 202250,
+   "mal": 62922,
+   "t": "Kashita Maryoku wa \"Revo Barai\" de Kyousei Choushuu",
+   "ep": 8,
+   "at": 1795278600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/79ec7c24168da1eb2e7437dca0d94f2c.jpg",
+   "sc": 64,
+   "fmt": "TV"
+  },
+  {
+   "al": 204269,
+   "mal": 63125,
+   "t": "Little Shark's Day Out Season 2",
+   "ep": 33,
+   "at": 1795298400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/1116d285b9ab7e08f812da30100c8ff0.jpg",
+   "sc": null,
+   "fmt": "TV_SHORT"
+  },
+  {
+   "al": 185646,
+   "mal": 60534,
+   "t": "Koupen-chan",
+   "ep": 85,
+   "at": 1795302000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/a93c7100f7f6f9815964812e831054e5.jpg",
+   "sc": 75,
+   "fmt": "TV"
+  },
+  {
+   "al": 202957,
+   "mal": 63042,
+   "t": "Star Detective Precure!",
+   "ep": 42,
+   "at": 1795303800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/7f7959e1567f278cff8c64602c15f494.jpg",
+   "sc": 76,
+   "fmt": "TV"
+  },
+  {
+   "al": 216860,
+   "mal": null,
+   "t": "Punirunes Puni 4",
+   "ep": 8,
+   "at": 1795306560,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/13bba47a059f5f143913add9f5a4e982.jpg",
+   "sc": null,
+   "fmt": "TV_SHORT"
+  },
+  {
+   "al": 189123,
+   "mal": 61323,
+   "t": "Blue Box Season 2",
+   "ep": 7,
+   "at": 1795332600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/6defda14c531dd74b2bab5102478163a.jpg",
+   "sc": 82,
+   "fmt": "TV"
+  },
+  {
+   "al": 191788,
+   "mal": 61603,
+   "t": "Aoashi 2nd Season",
+   "ep": 8,
+   "at": 1795334400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/757568f468515505024c9d2f9c47cb17.jpg",
+   "sc": 81,
+   "fmt": "TV"
+  },
+  {
+   "al": 213657,
+   "mal": 64503,
+   "t": "Mission: Yozakura Family Season 2 Part 2",
+   "ep": 7,
+   "at": 1795334400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/95a9255bc895bff70d46f3fa35ce0bfc.jpg",
+   "sc": 75,
+   "fmt": "TV"
+  },
+  {
+   "al": 213658,
+   "mal": 64505,
+   "t": "Ace of Diamond Act II Season 2 Part 2",
+   "ep": 7,
+   "at": 1795336200,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/b36e9b52a7a04c83dcdfbec4276eb288.jpg",
+   "sc": 77,
+   "fmt": "TV"
+  },
+  {
+   "al": 215835,
+   "mal": 64867,
+   "t": "Umayuru: Full Gate!",
+   "ep": 9,
+   "at": 1795348800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d28273290a6359ced47be12d21b710d8.jpg",
+   "sc": 66,
+   "fmt": "ONA"
+  },
+  {
+   "al": 186541,
+   "mal": 60948,
+   "t": "Reborn as a Space Mercenary: I Woke Up Piloting the Strongest Starship!",
+   "ep": 8,
+   "at": 1795350600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/310131b9f017befa2f65a09ef54bfb8a.jpg",
+   "sc": 69,
+   "fmt": "TV"
+  },
+  {
+   "al": 202079,
+   "mal": 62907,
+   "t": "Uncle's Obsession with Cute Things",
+   "ep": 8,
+   "at": 1795352400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/5205c12231f9e34e7098bf58c2f10f3d.jpg",
+   "sc": 66,
+   "fmt": "TV"
+  },
+  {
+   "al": 209499,
+   "mal": 63751,
+   "t": "Tank Chair",
+   "ep": 8,
+   "at": 1795356000,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/e39cd177e0583c3bfac85ea8d01db762.jpg",
+   "sc": 64,
+   "fmt": "TV"
+  },
+  {
+   "al": 206814,
+   "mal": 63367,
+   "t": "Dragon Ball Super: Beerus",
+   "ep": 7,
+   "at": 1795356960,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/980a4b7efc13f21e486a24b330c4e227.jpg",
+   "sc": 83,
+   "fmt": "TV"
+  },
+  {
+   "al": 185756,
+   "mal": 60601,
+   "t": "As a Reincarnated Aristocrat, I'll Use My Appraisal Skill to Rise in the World Season 3",
+   "ep": 9,
+   "at": 1795357800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/af057140b8b9b27a9085b0f431955950.jpg",
+   "sc": 74,
+   "fmt": "TV"
+  },
+  {
+   "al": 212888,
+   "mal": 64340,
+   "t": "Overgeared",
+   "ep": 9,
+   "at": 1795357800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d6fc82da38d7cfe2684e9db6265b295d.jpg",
+   "sc": 73,
+   "fmt": "TV"
+  },
+  {
+   "al": 200455,
+   "mal": 62753,
+   "t": "Even Though I'm a Super Timid Noble Girl, I Accepted the Bet From My Cunning Fiancé",
+   "ep": 8,
+   "at": 1795357800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/84e616ab86469e51f20d73d23c7e49e6.jpg",
+   "sc": 71,
+   "fmt": "TV"
+  },
+  {
+   "al": 205896,
+   "mal": 63292,
+   "t": "Full Clearing Another World under a Goddess with Zero Believers",
+   "ep": 7,
+   "at": 1795357800,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/83fedd9f4ba7ba74e4774b0ab142b915.jpg",
+   "sc": 66,
+   "fmt": "TV"
+  },
+  {
+   "al": 199426,
+   "mal": 62590,
+   "t": "Hotel Inhumans Season 2",
+   "ep": 8,
+   "at": 1795358700,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/f8d93755875bbc5423355a5afa8b5774.jpg",
+   "sc": 69,
+   "fmt": "TV"
+  },
+  {
+   "al": 206774,
+   "mal": 63381,
+   "t": "Now That I Can Control Reality with a Mouse Cursor, I'm Gonna Click Away on the Girls!",
+   "ep": 6,
+   "at": 1795359600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/6781c76850733fab7781b19ac9ddc7a5.jpg",
+   "sc": 60,
+   "fmt": "ONA"
+  },
+  {
+   "al": 209463,
+   "mal": 63753,
+   "t": "From Far Away, From the Other Side",
+   "ep": 8,
+   "at": 1795359600,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/925a724e4eeabea9a8a73962dfa06dc1.jpg",
+   "sc": 64,
+   "fmt": "TV"
+  },
+  {
+   "al": 211877,
+   "mal": 64131,
+   "t": "My Girlfriend's Friend",
+   "ep": 8,
+   "at": 1795363500,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/31d8e106f5c1fbda8f2ac49403b36f5f.jpg",
+   "sc": 58,
+   "fmt": "ONA"
+  },
+  {
+   "al": 212667,
+   "mal": 64298,
+   "t": "The Lonely Snow Widow and the Cursed Ring",
+   "ep": 7,
+   "at": 1795363500,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/64aa9721797bd66f76fe695f4730e8b1.jpg",
+   "sc": 67,
+   "fmt": "ONA"
+  },
+  {
+   "al": 208025,
+   "mal": 63509,
+   "t": "I'm Dating a Dark Summoner",
+   "ep": 8,
+   "at": 1795364400,
+   "poster": "https://cdn.anipixcdn.co/thumbnail/e9c040c40404d9dc8afaf3905f689528.jpg",
+   "sc": 70,
+   "fmt": "ONA"
+  }
+ ]
+}
