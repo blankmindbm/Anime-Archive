@@ -311,6 +311,28 @@
   .pcard .pmeta { margin: 0; color: var(--muted); font-size: 12.5px; }
   .pcard:hover .poster { border-color: var(--accent); }
 
+  /* watched progress on poster cards: a thin accent bar at the
+     bottom of the poster, plus a small Watched badge when a show is
+     fully watched. Only rendered when at least one episode is
+     watched and the episode total is known. */
+  .wbar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; z-index: 2; background: rgba(255,255,255,.22); }
+  .wbar-fill { display: block; height: 100%; background: var(--accent); }
+  .wbadge {
+    position: absolute; right: 8px; bottom: 10px; z-index: 2;
+    background: var(--accent); color: var(--accent-ink);
+    font-size: 11px; font-weight: 800; letter-spacing: .02em;
+    padding: 3px 8px; border-radius: 8px; white-space: nowrap;
+  }
+  .wbadge.br { right: 48px; } /* schedule cards: clear the bottom-right bookmark button */
+
+  /* watched progress line on the show detail page */
+  .dprogress { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .dprogress:empty { display: none; }
+  .dprogress .dp-text { font-weight: 700; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .dprogress .dp-bar { flex: 1; height: 5px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; min-width: 60px; }
+  .dprogress .dp-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .dprogress .dp-done { background: var(--accent); color: var(--accent-ink); font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+
   /* trending rail: big outlined rank numbers */
   .trend-card { display: flex; align-items: flex-end; flex: 0 0 auto; scroll-snap-align: start; cursor: pointer; }
   .trend-num {
@@ -1195,6 +1217,7 @@
           <div class="dhead-info">
             <h2 id="detailTitle">Loading show...</h2>
             <div id="detailChips" class="dchips"></div>
+            <div id="detailProgress" class="dprogress"></div>
           </div>
         </div>
         <div class="watch-row">
@@ -1653,6 +1676,50 @@
     return meta.year ? s + " " + meta.year : s;
   }
 
+  /* ---------- watched progress ---------- */
+  /* state.watched maps show key -> { episode number: true }. The
+     count is the number of marked episodes, clamped to the known
+     episode total. Cards only know the catalog entry, so the total
+     is the catalog episodes field; the detail page passes the
+     loaded episode list length instead. A show with no known total
+     (or nothing watched yet) shows nothing. */
+  function watchedProgress(key, total) {
+    total = Number(total) || 0;
+    if (!key || total < 1) { return null; }
+    var map = state.watched[key] || {};
+    var n = Object.keys(map).length;
+    if (n < 1) { return null; }
+    if (n > total) { n = total; }
+    return { watched: n, total: total, pct: Math.max(1, Math.round(n / total * 100)), done: n >= total };
+  }
+
+  function watchedBarHtml(key, total, badgeClass) {
+    var p = watchedProgress(key, total);
+    if (!p) { return ""; }
+    var html = '<span class="wbar"><span class="wbar-fill" style="width:' + p.pct + '%"></span></span>';
+    if (p.done) {
+      html += '<span class="wbadge' + (badgeClass ? " " + badgeClass : "") + '">&#10003; Watched</span>';
+    }
+    return html;
+  }
+
+  /* Re-paint the watched bar/badge on every card currently in the
+     document, reading the live watched map each time. Used after an
+     episode is marked watched and after a MAL import merges
+     progress, so bars update without a reload and without
+     rebuilding the grids (which would lose rail scroll positions). */
+  function refreshCardProgress() {
+    document.querySelectorAll(".pcard[data-key]").forEach(function (card) {
+      var poster = card.querySelector(".poster");
+      if (!poster) { return; }
+      poster.querySelectorAll(".wbar, .wbadge").forEach(function (el) { el.remove(); });
+      var key = card.getAttribute("data-key");
+      var entry = catalogEntryFor(key);
+      var html = watchedBarHtml(key, entry ? entry.ep : null, card.classList.contains("scard") ? "br" : "");
+      if (html) { poster.insertAdjacentHTML("beforeend", html); }
+    });
+  }
+
   /* ---------- poster cards ---------- */
 
   function posterCard(item) {
@@ -1670,6 +1737,7 @@
       '<button type="button" class="bm-btn' + (watchlist[key] ? " in-list" : "") + '" data-key="' + escapeHtml(key) +
       '" aria-label="' + (watchlist[key] ? "Remove from watchlist" : "Add to watchlist") + '">' + BOOKMARK_SVG + "</button>" +
       '<div class="poster-title">' + escapeHtml(title) + "</div>" +
+      watchedBarHtml(key, item.ep) +
       "</div>" +
       "<h3>" + escapeHtml(title) + "</h3>" +
       '<p class="pmeta">' + meta + "</p>" +
@@ -1798,6 +1866,7 @@
       ? '<img class="poster-img" src="' + escapeHtml(url) + '" alt="" loading="lazy" ' +
         'onerror="this.parentNode.classList.remove(\'has-art\'); this.remove();">'
       : "";
+    var catEntry = catalogEntryFor(key);
     return '<article class="pcard" data-key="' + escapeHtml(key) + '">' +
       '<div class="poster' + (url ? " has-art" : "") + '" style="--h:' + hueFor(title + (item.p || "anikoto")) + '" data-initial="' + escapeHtml(initial) + '">' +
       img + chip +
@@ -1805,6 +1874,7 @@
       '<button type="button" class="bm-btn' + (watchlist[key] ? " in-list" : "") + '" data-key="' + escapeHtml(key) +
       '" aria-label="' + (watchlist[key] ? "Remove from watchlist" : "Add to watchlist") + '">' + BOOKMARK_SVG + "</button>" +
       '<div class="poster-title">' + escapeHtml(title) + "</div>" +
+      watchedBarHtml(key, catEntry ? catEntry.ep : null) +
       "</div>" +
       "<h3>" + escapeHtml(title) + "</h3>" +
       '<p class="pmeta">' + meta + "</p>" +
@@ -2497,7 +2567,8 @@
     return fetchPage("/users/@me/animelist?fields=list_status&limit=1000").then(function () {
       malSyncing = false;
       saveWatchHistory();
-      if (state.currentEntry) { renderEpisodeList(); }
+      if (state.currentEntry) { renderEpisodeList(); renderDetailProgress(); }
+      refreshCardProgress();
       malLastSync = {
         at: Date.now(),
         text: "Synced " + shows + (shows === 1 ? " show" : " shows") + ", " + episodes + (episodes === 1 ? " episode" : " episodes") + " from MyAnimeList"
@@ -3254,6 +3325,27 @@
     $("detailHeroTitle").textContent = entry.t || "";
   }
 
+  /* Show detail progress line ("X of Y episodes watched", plus a
+     Watched pill when complete). The total is the loaded episode
+     list length, falling back to the catalog episodes field.
+     Hidden when the total is unknown. */
+  function renderDetailProgress() {
+    var el = $("detailProgress");
+    if (!el) { return; }
+    var entry = state.currentEntry, show = state.currentShow;
+    if (!entry || !show) { el.innerHTML = ""; return; }
+    var total = (show.eps && show.eps.length) || Number(entry.ep) || 0;
+    if (!total) { el.innerHTML = ""; return; }
+    var map = state.watched[state.currentKey] || {};
+    var n = Object.keys(map).length;
+    if (n > total) { n = total; }
+    var pct = n < 1 ? 0 : Math.max(1, Math.round(n / total * 100));
+    el.innerHTML =
+      '<span class="dp-text">' + n + " of " + total + " episodes watched</span>" +
+      '<span class="dp-bar"><span style="width:' + pct + '%"></span></span>' +
+      (n >= total ? '<span class="dp-done">&#10003; Watched</span>' : "");
+  }
+
   function renderDetailChips(entry, eps, meta) {
     var chips = "";
     if (entry.sc != null) {
@@ -3756,6 +3848,8 @@
     }
     recordWatchHistory(num);
     malPushEpisode(entry, num, show);
+    renderDetailProgress();
+    refreshCardProgress();
     var area = $("playerArea"), note = $("playerNote");
     openEpisodeView();
     renderEpisodeList();
@@ -3884,6 +3978,7 @@
     setDetailTab("overview");
     $("epHeading").textContent = "Episodes (" + eps.length + ")";
     renderEpisodeList();
+    renderDetailProgress();
     destroyHls();
     vpSetMode("none");
     $("playerArea").innerHTML = '<div class="player-note">' +
@@ -3928,6 +4023,7 @@
     renderDetailPoster();
     renderDetailHero();
     $("detailChips").innerHTML = "";
+    $("detailProgress").innerHTML = "";
     syncDetailWatchBtn();
     $("detailTitle").textContent = entry.t || "Loading show...";
     $("detailMeta").innerHTML = "<p>Loading episode data...</p>";
@@ -4279,6 +4375,7 @@
       img +
       '<span class="ep-chip">Ep ' + item.ep + "</span>" + pct + airChip + bm +
       '<div class="poster-title">' + escapeHtml(title) + "</div>" +
+      watchedBarHtml(key, entry ? entry.ep : null, "br") +
       "</div>" +
       "<h3>" + escapeHtml(title) + "</h3>" +
       '<p class="pmeta">' + escapeHtml(meta) + "</p>" +
