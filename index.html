@@ -1499,11 +1499,12 @@
 
   /* ---------- synopsis / genre metadata ---------- */
   /* Real per-title metadata pulled from the AniKoto API at build time:
-     assets/data/metadata.json (AniKoto id -> record) and
+     assets/data/metadata-0.json, metadata-1.json, metadata-2.json
+     (AniKoto id -> record, split in three so each file stays small) and
      assets/data/metadata_non_anikoto.json ("provider_id" -> record). Each
      record carries description, genres, studios, type, season, year.
      Loaded lazily the first time a show page opens, so the home page
-     never pays for the 6.8 MB file. AniKoto list fields arrive as
+     never pays for the metadata. AniKoto list fields arrive as
      stringified lists ("['Action', 'Fantasy']"); the non-AniKoto file
      carries real arrays. parseListField handles both. */
 
@@ -1512,11 +1513,13 @@
   function loadMetadata() {
     if (metaPromise) { return metaPromise; }
     metaPromise = Promise.all([
-      fetchJson("assets/data/metadata.json").catch(function () { return {}; }),
+      fetchJson("assets/data/metadata-0.json").catch(function () { return {}; }),
+      fetchJson("assets/data/metadata-1.json").catch(function () { return {}; }),
+      fetchJson("assets/data/metadata-2.json").catch(function () { return {}; }),
       fetchJson("assets/data/metadata_non_anikoto.json").catch(function () { return {}; })
     ]).then(function (results) {
-      metaCache = results[0] || {};
-      metaExtraCache = results[1] || {};
+      metaCache = Object.assign({}, results[0] || {}, results[1] || {}, results[2] || {});
+      metaExtraCache = results[3] || {};
       return true;
     });
     return metaPromise;
