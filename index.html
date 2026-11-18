@@ -1696,7 +1696,11 @@
   function watchedBarHtml(key, total, badgeClass) {
     var p = watchedProgress(key, total);
     if (!p) { return ""; }
-    var html = '<span class="wbar"><span class="wbar-fill" style="width:' + p.pct + '%"></span></span>';
+    /* The fill keeps a 6px floor: a 1% minimum is only ~1.6px on a
+       158px poster and renders invisibly for long shows (1-2 of
+       1180 episodes), so any partial progress must show a visible
+       purple sliver. The floor never affects fully-watched shows. */
+    var html = '<span class="wbar"><span class="wbar-fill" style="width:' + p.pct + '%;min-width:6px"></span></span>';
     if (p.done) {
       html += '<span class="wbadge' + (badgeClass ? " " + badgeClass : "") + '">&#10003; Watched</span>';
     }
@@ -3342,7 +3346,7 @@
     var pct = n < 1 ? 0 : Math.max(1, Math.round(n / total * 100));
     el.innerHTML =
       '<span class="dp-text">' + n + " of " + total + " episodes watched</span>" +
-      '<span class="dp-bar"><span style="width:' + pct + '%"></span></span>' +
+      '<span class="dp-bar"><span style="width:' + pct + '%;min-width:' + (n < 1 ? 0 : 6) + 'px"></span></span>' +
       (n >= total ? '<span class="dp-done">&#10003; Watched</span>' : "");
   }
 
