@@ -1547,6 +1547,7 @@
     currentEpisode: null, audio: "sub",
     epvQuery: "", epvRange: 0, primaryEp: null, detailTab: "overview",
     watched: {}, /* show key -> { episode number: true }; saved on this device with the Continue Watching list */
+    unmarked: {}, /* show key -> { episode number: true }; episodes explicitly marked unwatched, so the MAL import does not re-add them; saved on this device with the watched map */
     watchHistory: [], /* newest first: { key, p, id, t, ep, at }, one entry per show, capped at 10; restored from this device on load */
     pendingResumeKey: null, pendingResumeEp: null
   };
@@ -1954,7 +1955,8 @@
       if (!store) { return; }
       store.setItem(CW_STORAGE_KEY, JSON.stringify({
         history: state.watchHistory.slice(0, 10),
-        watched: state.watched
+        watched: state.watched,
+        unmarked: state.unmarked
       }));
     } catch (err) { /* storage unavailable: keep the in-memory list */ }
     cloudSave();
@@ -2007,7 +2009,26 @@
         if (Object.keys(clean).length) { watched[k] = clean; }
       });
     }
+    /* Restore the explicit-unmark map, validated to the same plain
+       { showKey: { epNumber: true } } shape as the watched map. */
+    var unmarked = {};
+    if (data.unmarked && typeof data.unmarked === "object" && !Array.isArray(data.unmarked)) {
+      Object.keys(data.unmarked).forEach(function (k) {
+        var eps = data.unmarked[k];
+        if (!eps || typeof eps !== "object" || Array.isArray(eps)) { return; }
+        var clean = {};
+        Object.keys(eps).forEach(function (n) {
+          var num = Number(n);
+          if (eps[n] && isFinite(num) && num >= 1) { clean[Math.floor(num)] = true; }
+        });
+        if (Object.keys(clean).length) { unmarked[k] = clean; }
+      });
+    }
+    state.unmarked = unmarked;
     state.watchHistory.forEach(function (h) {
+      /* An episode the reader explicitly unmarked stays unmarked,
+         even if it is still the show's latest history entry. */
+      if (state.unmarked[h.key] && state.unmarked[h.key][h.ep]) { return; }
       if (!watched[h.key]) { watched[h.key] = {}; }
       watched[h.key][h.ep] = true;
     });
@@ -2588,6 +2609,10 @@
           if (!state.watched[key]) { state.watched[key] = {}; }
           var added = 0, n;
           for (n = 1; n <= watchedCount; n++) {
+            /* Episodes explicitly unmarked on this device stay
+               unmarked; MAL only stores a count, so the import
+               would otherwise re-add them on every load. */
+            if (state.unmarked[key] && state.unmarked[key][n]) { continue; }
             if (!state.watched[key][n]) { state.watched[key][n] = true; added++; }
           }
           if (added > 0) { shows++; episodes += added; }
@@ -3642,12 +3667,15 @@
     var entry = state.currentEntry, show = state.currentShow, key = state.currentKey;
     if (!entry || !show || !key) { return; }
     if (!state.watched[key]) { state.watched[key] = {}; }
+    if (!state.unmarked[key]) { state.unmarked[key] = {}; }
     if (watched) {
       state.watched[key][num] = true;
+      delete state.unmarked[key][num];
       saveWatchHistory();
       malPushEpisode(entry, num, show);
     } else {
       delete state.watched[key][num];
+      state.unmarked[key][num] = true;
       saveWatchHistory();
       malUnmarkEpisode(entry, num, show);
     }
@@ -4010,6 +4038,8 @@
     if (state.currentKey) {
       if (!state.watched[state.currentKey]) { state.watched[state.currentKey] = {}; }
       state.watched[state.currentKey][num] = true;
+      /* Rewatching clears any explicit unmark for this episode. */
+      if (state.unmarked[state.currentKey]) { delete state.unmarked[state.currentKey][num]; }
     }
     recordWatchHistory(num);
     malPushEpisode(entry, num, show);
