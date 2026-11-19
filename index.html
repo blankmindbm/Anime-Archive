@@ -1199,7 +1199,7 @@
           <p class="acct-note" id="malSyncNote"></p>
         </div>
         <label class="acct-toggle"><input type="checkbox" id="malAutoPushToggle" checked> <span>Mark episodes on MyAnimeList automatically<small>When an episode is opened here, update its watched count on MyAnimeList.</small></span></label>
-        <label class="acct-toggle"><input type="checkbox" id="malImportToggle" checked> <span>Import MyAnimeList progress on connect<small>When connecting, mark episodes already watched on MyAnimeList as watched here.</small></span></label>
+        <label class="acct-toggle"><input type="checkbox" id="malImportToggle" checked> <span>Sync MyAnimeList progress on connect and on load<small>When connecting, and every time the site loads, mark episodes already watched on MyAnimeList as watched here.</small></span></label>
       </div>
     </section>
 
@@ -4861,6 +4861,18 @@
         renderSectionGrid();
       }
       if (sched.items.length) { renderSchedule(); }
+      // Auto-sync from MyAnimeList on every load when already
+      // connected: a browser that connected a while ago would
+      // otherwise show stale watched counts until the next
+      // connect or a manual sync. Gated on the import
+      // preference, quiet (auto=true), and it only adds marks
+      // (1..N from MAL), so it never erases episodes marked
+      // watched on this device. The malSyncing guard inside
+      // malImportFromMal keeps a connect callback on the same
+      // load from running it twice (on a callback load the
+      // auth is not restored yet when this runs, so this call
+      // no-ops and the callback's import runs instead).
+      if (malPrefs.importOnConnect) { malImportFromMal(true); }
     }).catch(function () {
       var sc = $("searchResultCount"); if (sc) { sc.textContent = "The catalog file could not be loaded."; }
       var sg = $("searchGrid"); if (sg) { sg.innerHTML = '<div class="empty"><strong>Catalog failed to load.</strong><br>Reload the page to try again.</div>'; }
