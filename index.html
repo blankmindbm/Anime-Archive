@@ -137,7 +137,7 @@
   }
   .cw-slide {
     position: absolute; inset: 0; opacity: 0; pointer-events: none;
-    transition: opacity .55s ease;
+    transition: opacity .55s ease; cursor: pointer;
     background: linear-gradient(158deg, hsl(var(--h, 262) 58% 38%) 0%, hsl(calc(var(--h, 262) + 45) 62% 15%) 88%);
   }
   .cw-slide.on { opacity: 1; pointer-events: auto; }
@@ -174,6 +174,7 @@
     text-shadow: 0 2px 18px rgba(0,0,0,.65);
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
+  .cw-slide:hover .cw-info h3 { text-decoration: underline; }
   .cw-meta {
     display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
     color: rgba(255,255,255,.88); font-size: 14px; font-weight: 600;
@@ -2734,6 +2735,8 @@
   /* ----- banner carousel state ----- */
   var cwIndex = 0;
   var cwTimer = null;
+  var cwSwipeIgnoreUntil = 0; /* a swipe's trailing click must not open the show */
+  var cwLoading = {};         /* show keys with a banner episode-data fetch in flight */
 
   function cwReducedMotion() {
     return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -2774,11 +2777,30 @@
     return found;
   }
 
+  /* Banner resume target. The episode data for a history show loads
+     asynchronously from its shard, so until it arrives this returns
+     null and the slide keeps the stored last-watched episode as its
+     provisional target. Once loaded, the target is the next unwatched
+     episode from the same shared computation the detail page's primary
+     button uses. When every episode is watched, the banner keeps its
+     old fallback: replay the last watched episode. */
+  function bannerResumeTarget(item) {
+    var show = showCache[item.key];
+    if (!show || !show.eps || !show.eps.length) { return null; }
+    var seen = state.watched[item.key] || {};
+    var next = nextUnwatchedEpisode(show.eps, seen);
+    if (next != null) { return { ep: next, label: "Continue Episode " + next }; }
+    return { ep: item.ep, label: "Resume Episode " + item.ep };
+  }
+
   function continueSlide(item, active) {
     var title = item.t || "Untitled";
     var when = watchedAgo(item.at);
     var entry = catalogEntryFor(item.key);
     var pill = "Continue Watching \u2022 EP " + item.ep + (when ? " \u2022 Watched " + when : "");
+    var target = bannerResumeTarget(item);
+    var resumeEp = target ? target.ep : item.ep;
+    var resumeLabel = target ? target.label : "Resume Episode " + item.ep;
     var url = posterFor({ p: item.p, id: item.id });
     var img = url
       ? '<img class="cw-bg" src="' + escapeHtml(url) + '" alt="" loading="lazy" ' +
@@ -2794,7 +2816,7 @@
     if (entry && entry.st) {
       metaParts.push("<span>" + escapeHtml(entry.st === "Currently Airing" ? "Releasing" : entry.st) + "</span>");
     }
-    metaParts.push("<span>Episode " + item.ep + " up next</span>");
+    metaParts.push("<span>Episode " + resumeEp + " up next</span>");
     return '<article class="cw-slide' + (active ? " on" : "") + '" data-key="' + escapeHtml(item.key) + '" data-ep="' + item.ep +
       '" style="--h:' + hueFor(title + item.p) + '">' +
       img +
@@ -2805,8 +2827,8 @@
       '<span class="cw-pill"><span class="dot"></span>' + escapeHtml(pill) + "</span>" +
       "<h3>" + escapeHtml(title) + "</h3>" +
       '<div class="cw-meta">' + metaParts.join('<span class="sep">&middot;</span>') + "</div>" +
-      '<button type="button" class="cw-resume" data-resume-key="' + escapeHtml(item.key) + '" data-resume-ep="' + item.ep + '">' +
-      TICKER_PLAY_SVG + "<span>Resume Episode " + item.ep + "</span></button>" +
+      '<button type="button" class="cw-resume" data-resume-key="' + escapeHtml(item.key) + '" data-resume-ep="' + resumeEp + '">' +
+      TICKER_PLAY_SVG + "<span>" + escapeHtml(resumeLabel) + "</span></button>" +
       "</div>" +
       "</article>";
   }
@@ -2867,8 +2889,32 @@
       });
     });
     slidesEl.querySelectorAll(".cw-resume").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
         resumeContinue(btn.getAttribute("data-resume-key"), Number(btn.getAttribute("data-resume-ep")));
+      });
+    });
+    /* Tapping the slide (title, poster, or info area) opens the show,
+       the way tapping a card does elsewhere. The X and Resume buttons
+       stop propagation above so they keep their own actions, and a
+       swipe's trailing click is ignored (see cwSwipeIgnoreUntil). */
+    slidesEl.querySelectorAll(".cw-slide").forEach(function (slide) {
+      slide.addEventListener("click", function () {
+        if (Date.now() < cwSwipeIgnoreUntil) { return; }
+        openShow(slide.getAttribute("data-key"));
+      });
+    });
+    /* Episode data for banner shows loads on demand; once a show's
+       episode list arrives, re-render so its Resume button points at
+       the next unwatched episode instead of the last watched one. */
+    history.forEach(function (item) {
+      if (showCache[item.key] || cwLoading[item.key]) { return; }
+      var entry = catalogEntryFor(item.key);
+      if (!entry) { return; }
+      cwLoading[item.key] = true;
+      loadShowData(entry).then(function () {
+        delete cwLoading[item.key];
+        renderBannerTicker();
       });
     });
     cwStartAuto();
@@ -3530,6 +3576,23 @@
     $("detailMeta").innerHTML = buildDetailsHtml(entry, eps, meta);
   }
 
+  /* Shared "what to play next" computation, used by the detail page's
+     primary button and by the Continue Watching banner so the two can
+     never disagree: the next episode is the lowest-numbered episode in
+     the show's episode list that is not marked watched, and maxSeen is
+     the highest episode marked watched. */
+  function nextUnwatchedEpisode(eps, seen) {
+    var next = null;
+    eps.forEach(function (e) { if (next == null && !seen[e[0]]) { next = e[0]; } });
+    return next;
+  }
+
+  function highestWatchedEpisode(eps, seen) {
+    var maxSeen = 0;
+    eps.forEach(function (e) { if (seen[e[0]] && e[0] > maxSeen) { maxSeen = e[0]; } });
+    return maxSeen;
+  }
+
   function syncWatchPrimary(eps) {
     var btn = $("watchPrimaryBtn");
     if (!eps || !eps.length) {
@@ -3541,11 +3604,9 @@
     }
     btn.disabled = false;
     var seen = state.currentKey ? (state.watched[state.currentKey] || {}) : {};
-    var maxSeen = 0;
-    eps.forEach(function (e) { if (seen[e[0]] && e[0] > maxSeen) { maxSeen = e[0]; } });
-    var next = null;
-    eps.forEach(function (e) { if (next == null && e[0] > maxSeen) { next = e[0]; } });
-    if (maxSeen && next != null) {
+    var next = nextUnwatchedEpisode(eps, seen);
+    var maxSeen = highestWatchedEpisode(eps, seen);
+    if (next != null && maxSeen) {
       state.primaryEp = next;
       $("watchPrimaryMain").textContent = "Continue Episode " + next;
       $("watchPrimarySub").textContent = "Up Next \u00B7 Ep " + maxSeen + " Finished";
@@ -4786,6 +4847,7 @@
         var dx = ev.changedTouches[0].clientX - cwTouchX;
         cwTouchX = null;
         if (Math.abs(dx) < 42) { return; }
+        cwSwipeIgnoreUntil = Date.now() + 350;
         cwGo(cwIndex + (dx < 0 ? 1 : -1), true);
       }, { passive: true });
     }
