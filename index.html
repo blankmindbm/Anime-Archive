@@ -932,6 +932,25 @@
   }
   .eprow-menu svg { width: 18px; height: 18px; display: block; }
   .eprow-menu:hover { color: var(--accent); background: var(--card2); }
+  /* episode options popup: a small menu anchored near the row's "..."
+     button, offering Mark as watched / Mark as unwatched. It is one
+     fixed element (created by getEpMenu) positioned from the button's
+     bounding rect, so the same menu serves both episode lists. */
+  .ep-menu {
+    position: fixed; z-index: 80; min-width: 200px;
+    background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,.55);
+  }
+  .ep-menu.hidden { display: none; }
+  .ep-menu-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: none; border: 0; color: var(--text);
+    font-size: 13.5px; font-weight: 600; padding: 9px 10px; border-radius: 8px;
+    cursor: pointer; text-align: left;
+  }
+  .ep-menu-item:hover { background: rgba(169,112,255,.12); }
+  .ep-menu-check { width: 16px; flex: 0 0 auto; color: var(--accent); font-weight: 800; visibility: hidden; }
+  .ep-menu-item.on .ep-menu-check { visibility: visible; }
   .story-clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
   .story-more {
     background: none; border: 0; color: var(--accent); font-size: 14.5px; font-weight: 700;
@@ -3523,7 +3542,6 @@
       : "";
     var seen = state.currentKey && state.watched[state.currentKey] && state.watched[state.currentKey][num];
     var audio = e[3] ? "Sub + Dub" : "Sub";
-    var src = e[4] || (entry ? entry.u : "") || "";
     var now = state.currentEpisode === num;
     return '<article class="eprow' + (now ? " now" : "") + '" data-ep="' + num + '">' +
       '<div class="epthumb" style="--h:' + hueFor((entry ? entry.t : "") + num) + '">' + img +
@@ -3532,8 +3550,7 @@
       '<p class="eprow-meta"><span>EP ' + num + " \u00B7 " + audio + "</span>" +
       (seen ? '<span class="watched-pill">&#10003; Watched</span>' : "") +
       (now ? '<span class="now-badge">NOW PLAYING</span>' : "") + "</p></div>" +
-      (src ? '<button type="button" class="eprow-menu" data-src="' + escapeHtml(src) +
-        '" aria-label="Open the source page for episode ' + num + '">' + DOTS_SVG + "</button>" : "") +
+      '<button type="button" class="eprow-menu" aria-label="Episode options for episode ' + num + '">' + DOTS_SVG + "</button>" +
       "</article>";
   }
 
@@ -3547,10 +3564,131 @@
     scope.querySelectorAll(".eprow-menu").forEach(function (btn) {
       btn.addEventListener("click", function (ev) {
         ev.stopPropagation();
-        var src = btn.getAttribute("data-src");
-        if (src) { window.open(src, "_blank", "noopener"); }
+        var row = btn.closest ? btn.closest(".eprow") : null;
+        var num = row ? Number(row.getAttribute("data-ep")) : NaN;
+        if (!isFinite(num)) { return; }
+        openEpMenu(btn, num);
       });
     });
+  }
+
+  /* ----- episode options popup (Mark as watched / Mark as unwatched) ----- */
+  var epMenuEl = null;
+
+  function getEpMenu() {
+    if (epMenuEl) { return epMenuEl; }
+    var menu = document.createElement("div");
+    menu.id = "epMenu";
+    menu.className = "ep-menu hidden";
+    menu.setAttribute("role", "menu");
+    menu.innerHTML =
+      '<button type="button" class="ep-menu-item" data-act="watched" role="menuitem"><span class="ep-menu-check">&#10003;</span> Mark as watched</button>' +
+      '<button type="button" class="ep-menu-item" data-act="unwatched" role="menuitem"><span class="ep-menu-check">&#10003;</span> Mark as unwatched</button>';
+    document.body.appendChild(menu);
+    epMenuEl = menu;
+    menu.addEventListener("click", function (ev) {
+      var item = ev.target && ev.target.closest ? ev.target.closest(".ep-menu-item") : null;
+      if (!item) { return; }
+      var num = Number(menu.dataset.ep);
+      if (!isFinite(num)) { return; }
+      closeEpMenu();
+      toggleEpisodeWatched(num, item.getAttribute("data-act") === "watched");
+    });
+    /* Close on a click anywhere else, on Escape, or on any scroll (the
+       menu is positioned from the row's rect, so it would detach). The
+       "..." button itself stops propagation, so its clicks never reach
+       this handler; the check below is belt and braces. */
+    document.addEventListener("click", function (ev) {
+      if (!epMenuEl || epMenuEl.classList.contains("hidden")) { return; }
+      if (ev.target && ev.target.closest && (ev.target.closest("#epMenu") || ev.target.closest(".eprow-menu"))) { return; }
+      closeEpMenu();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") { closeEpMenu(); }
+    });
+    window.addEventListener("scroll", function () { closeEpMenu(); }, true);
+    return menu;
+  }
+
+  function closeEpMenu() {
+    if (epMenuEl) { epMenuEl.classList.add("hidden"); }
+  }
+
+  function openEpMenu(btn, num) {
+    var menu = getEpMenu();
+    var seen = state.currentKey && state.watched[state.currentKey] && state.watched[state.currentKey][num];
+    menu.dataset.ep = String(num);
+    menu.querySelector('[data-act="watched"]').classList.toggle("on", !!seen);
+    menu.querySelector('[data-act="unwatched"]').classList.toggle("on", !seen);
+    menu.classList.remove("hidden");
+    var r = btn.getBoundingClientRect();
+    var mw = menu.offsetWidth, mh = menu.offsetHeight;
+    var left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8));
+    var top = r.bottom + 6;
+    if (top + mh > window.innerHeight - 8) { top = Math.max(8, r.top - mh - 6); }
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+  }
+
+  /* Mark one episode watched or unwatched from the row menu. Mirrors
+     what opening an episode does for the watched mark (local mark,
+     save, MAL push via malPushEpisode), and for the unmark it also
+     lowers MAL's count to the highest episode still watched, so the
+     next load-time MAL sync does not re-mark it. MAL only stores a
+     count, so unmarking a middle episode while higher ones stay
+     marked cannot stick: the next sync re-marks it. Unmarking the
+     highest watched episode (the common case) sticks exactly. */
+  function toggleEpisodeWatched(num, watched) {
+    var entry = state.currentEntry, show = state.currentShow, key = state.currentKey;
+    if (!entry || !show || !key) { return; }
+    if (!state.watched[key]) { state.watched[key] = {}; }
+    if (watched) {
+      state.watched[key][num] = true;
+      saveWatchHistory();
+      malPushEpisode(entry, num, show);
+    } else {
+      delete state.watched[key][num];
+      saveWatchHistory();
+      malUnmarkEpisode(entry, num, show);
+    }
+    renderEpisodeList();
+    renderEpvList();
+    renderDetailProgress();
+    if (show.eps) { syncWatchPrimary(show.eps); }
+    refreshCardProgress();
+  }
+
+  function malUnmarkEpisode(entry, num, show) {
+    try {
+      if (!malAuth) { return; }
+      if (!entry || !entry.mal) { return; }
+      var malId = Number(entry.mal);
+      if (!isFinite(malId) || malId < 1) { return; }
+      var lastEp = entry.ep ? Number(entry.ep) : 0;
+      (show && show.eps || []).forEach(function (e) {
+        if (e && isFinite(Number(e[0])) && Number(e[0]) > lastEp) { lastEp = Number(e[0]); }
+      });
+      /* Highest episode still marked watched locally, after the
+         unmark above. This is the count MAL has to hold. */
+      var map = state.currentKey ? (state.watched[state.currentKey] || {}) : {};
+      var highest = 0;
+      Object.keys(map).forEach(function (k) {
+        var n = Number(k);
+        if (isFinite(n) && n > highest) { highest = n; }
+      });
+      var body = new URLSearchParams();
+      body.append("num_watched_episodes", String(highest));
+      if (highest < 1) { body.append("status", "plan_to_watch"); }
+      else if (lastEp && highest >= lastEp) { body.append("status", "completed"); }
+      else { body.append("status", "watching"); }
+      malApi("/anime/" + malId + "/my_list_status", { method: "PATCH", body: body.toString() }).then(function () {
+        malLastSync = {
+          at: Date.now(),
+          text: "Marked episode " + num + " of " + (entry.t || "this show") + " unwatched on MyAnimeList"
+        };
+        renderMalSection();
+      }).catch(function () { /* quiet: the local unmark already happened */ });
+    } catch (err) { /* never break the UI */ }
   }
 
   function renderEpisodeList() {
