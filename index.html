@@ -2033,6 +2033,39 @@
       watched[h.key][h.ep] = true;
     });
     state.watched = watched;
+    /* Clean up entries left stale by unmarks made before the unmark
+       code kept the banner in step: a show with no watched episodes
+       left leaves Continue Watching, and an entry pointing at an
+       episode that was unmarked moves to the highest episode still
+       watched. Persist the cleaned list so the entry does not come
+       back on the next load. */
+    if (repairWatchHistory()) { saveWatchHistory(); }
+  }
+
+  function repairWatchHistory() {
+    /* Repair each Continue Watching entry against the final watched
+       map. A show with no watched episodes at all drops out of the
+       banner; an entry whose resume episode is no longer watched
+       moves to the highest episode still watched, keeping its
+       position and timestamp. Returns true when anything changed. */
+    var changed = false;
+    var kept = [];
+    state.watchHistory.forEach(function (h) {
+      var map = state.watched[h.key] || {};
+      var highest = 0;
+      Object.keys(map).forEach(function (k) {
+        var n = Number(k);
+        if (isFinite(n) && n > highest) { highest = n; }
+      });
+      if (highest < 1) { changed = true; return; }
+      if (!map[h.ep]) {
+        h.ep = highest;
+        changed = true;
+      }
+      kept.push(h);
+    });
+    if (changed) { state.watchHistory = kept; }
+    return changed;
   }
 
   function clearWatchHistory() {
@@ -2203,6 +2236,11 @@
       var data = (doc && doc.exists) ? doc.data() : null;
       if (!data) { cloudSave(); return; }
       state.watchHistory = mergeHistory(state.watchHistory, data.continueWatching);
+      /* The cloud copy can hold an entry the load-time cleanup just
+         dropped (it was saved before the unmark code kept the banner
+         in step). Repair the merged list the same way before it is
+         saved back, so the merge cannot resurrect it. */
+      repairWatchHistory();
       watchlist = mergeBookmarks(watchlist, data.bookmarks);
       saveWatchHistory();
       saveBookmarks();
