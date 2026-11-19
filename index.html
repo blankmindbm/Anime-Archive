@@ -640,6 +640,13 @@
     flex: 0 0 auto; background: rgba(169,112,255,.14); border: 1px solid var(--accent); color: var(--accent);
     font-size: 10.5px; font-weight: 800; letter-spacing: .05em; padding: 3px 8px; border-radius: 999px; white-space: nowrap;
   }
+  /* watched pill on episode rows: same shape as .now-badge, but filled
+     purple like the Watched badge on cards, so a watched episode is
+     obvious in the list and not only a 3px line under its thumbnail. */
+  .watched-pill {
+    flex: 0 0 auto; background: var(--accent); color: var(--accent-ink);
+    font-size: 10.5px; font-weight: 800; letter-spacing: .05em; padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
 
   /* ---------- episode player view (Mizuki style) ---------- */
   .epview { margin-top: 10px; }
@@ -3523,6 +3530,7 @@
       '<span class="epthumb-num">EP ' + num + "</span>" + (seen ? '<span class="prog"></span>' : "") + "</div>" +
       '<div class="eprow-info"><h4>' + escapeHtml(epTitleOf(e)) + "</h4>" +
       '<p class="eprow-meta"><span>EP ' + num + " \u00B7 " + audio + "</span>" +
+      (seen ? '<span class="watched-pill">&#10003; Watched</span>' : "") +
       (now ? '<span class="now-badge">NOW PLAYING</span>' : "") + "</p></div>" +
       (src ? '<button type="button" class="eprow-menu" data-src="' + escapeHtml(src) +
         '" aria-label="Open the source page for episode ' + num + '">' + DOTS_SVG + "</button>" : "") +
