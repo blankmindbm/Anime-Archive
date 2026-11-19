@@ -3673,11 +3673,41 @@
       delete state.unmarked[key][num];
       saveWatchHistory();
       malPushEpisode(entry, num, show);
+      /* Starting (or restarting) a show from the menu: if it is not
+         in Continue Watching, put it back at the front with this
+         episode as the resume point. If it is already there, leave
+         its entry alone so marking a lower episode never moves the
+         resume point backwards. */
+      var inHistory = false;
+      state.watchHistory.forEach(function (h) { if (h.key === key) { inHistory = true; } });
+      if (!inHistory) { recordWatchHistory(num); }
     } else {
       delete state.watched[key][num];
       state.unmarked[key][num] = true;
       saveWatchHistory();
       malUnmarkEpisode(entry, num, show);
+      /* Keep Continue Watching in step with the unmark: recompute
+         the highest episode still watched. If none is left, the show
+         leaves the banner. If the banner's resume episode was the
+         one just unmarked, point it at the highest still-watched
+         episode instead, keeping its position and timestamp. */
+      var map = state.watched[key] || {};
+      var highest = 0;
+      Object.keys(map).forEach(function (k) {
+        var n = Number(k);
+        if (isFinite(n) && n > highest) { highest = n; }
+      });
+      if (highest < 1) {
+        removeFromHistory(key);
+      } else {
+        var histEntry = null;
+        state.watchHistory.forEach(function (h) { if (h.key === key) { histEntry = h; } });
+        if (histEntry && Number(histEntry.ep) === Number(num)) {
+          histEntry.ep = highest;
+          saveWatchHistory();
+          renderBannerTicker();
+        }
+      }
     }
     renderEpisodeList();
     renderEpvList();
