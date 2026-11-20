@@ -1,7 +1,175 @@
 {
- "fetched_at": "2026-11-18T16:50:56Z",
+ "fetched_at": "2026-11-19T17:50:06Z",
  "source": "AniKoto API /recent-anime (ordered by updated_at), snapshot baked at build time",
  "items": [
+  {
+   "id": "9044",
+   "t": "The Iceblade Sorcerer Shall Rule the World II",
+   "ep": 7,
+   "sub": 7,
+   "dub": 5,
+   "upd": "2026-11-19 17:29:33",
+   "sc": 6.73,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/20346dad019e8ccda67ad24ebee17d3c.jpg",
+   "slug": "the-iceblade-sorcerer-shall-rule-the-world-ii-afe13"
+  },
+  {
+   "id": "8903",
+   "t": "The Exiled Heavy Knight Knows How to Game the System",
+   "ep": 21,
+   "sub": 21,
+   "dub": 19,
+   "upd": "2026-11-19 17:29:10",
+   "sc": 7.12,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/81d8f6bc61e91eeecbb1e08f767c475a.jpg",
+   "slug": "the-exiled-heavy-knight-knows-how-to-game-the-system"
+  },
+  {
+   "id": "8748",
+   "t": "Ingoku Danchi Deviant's Apartment Complex",
+   "ep": 12,
+   "sub": 12,
+   "dub": 2,
+   "upd": "2026-11-19 17:28:25",
+   "sc": 5.63,
+   "st": "Finished Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/08a060a61b90a099b277ce6a1982dfbb.jpg",
+   "slug": "ingoku-danchi-deviant-s-apartment-complex-shvpb"
+  },
+  {
+   "id": "9091",
+   "t": "With Vengeance, Sincerely, Your Broken Saintess Season 2",
+   "ep": 8,
+   "sub": 8,
+   "dub": null,
+   "upd": "2026-11-19 17:27:10",
+   "sc": 6.55,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/d95ad7f89ae0b5ad8b294a8bb7c78013.jpg",
+   "slug": "with-vengeance-sincerely-your-broken-saintess-season-2-e76e1"
+  },
+  {
+   "id": "9088",
+   "t": "Tetsuryou! Meet with Tetsudou Musume",
+   "ep": 7,
+   "sub": 7,
+   "dub": null,
+   "upd": "2026-11-19 17:27:04",
+   "sc": 6.64,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/0b339f52163dff166982207c24a56cac.jpg",
+   "slug": "tetsuryou-meet-with-tetsudou-musume-b2cab"
+  },
+  {
+   "id": "9036",
+   "t": "The Ramparts of Ice Season 2",
+   "ep": 8,
+   "sub": 8,
+   "dub": 8,
+   "upd": "2026-11-19 17:19:35",
+   "sc": 8.41,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/b6ae71493beee188609a8cceeb22e5f1.jpg",
+   "slug": "the-ramparts-of-ice-season-2-d7c45"
+  },
+  {
+   "id": "9040",
+   "t": "Dragon Ball Super: Beerus",
+   "ep": 6,
+   "sub": 6,
+   "dub": 2,
+   "upd": "2026-11-19 17:18:52",
+   "sc": 8.31,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/980a4b7efc13f21e486a24b330c4e227.jpg",
+   "slug": "dragon-ball-super-beerus-353c1"
+  },
+  {
+   "id": "9059",
+   "t": "FX Fighter Kurumi-chan",
+   "ep": 8,
+   "sub": 8,
+   "dub": 8,
+   "upd": "2026-11-19 17:15:27",
+   "sc": 7.3,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/bf9560c068acb95a7a35efe1eca3135f.jpg",
+   "slug": "fx-fighter-kurumi-chan-3348d"
+  },
+  {
+   "id": "8869",
+   "t": "A Returner's Magic Should be Special Season 2",
+   "ep": 7,
+   "sub": 7,
+   "dub": 7,
+   "upd": "2026-11-18 17:29:19",
+   "sc": 6.69,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/c05089f9cc81d577aa5ffdc219f30b8a.jpg",
+   "slug": "a-returner-s-magic-should-be-special-season-2"
+  },
+  {
+   "id": "9052",
+   "t": "Nia Liston: The Merciless Maiden",
+   "ep": 7,
+   "sub": 7,
+   "dub": 1,
+   "upd": "2026-11-18 17:23:30",
+   "sc": 7.58,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/6f97bd031372be8c00d3d9e1fde8d0c0.jpg",
+   "slug": "nia-liston-the-merciless-maiden-27e4d"
+  },
+  {
+   "id": "9093",
+   "t": "Juuou Mujin Dandivine",
+   "ep": 7,
+   "sub": 7,
+   "dub": null,
+   "upd": "2026-11-18 17:15:18",
+   "sc": 5.61,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/1217257a72a30a5c916c6a52584d3ad4.jpg",
+   "slug": "juuou-mujin-dandivine-d4687"
+  },
+  {
+   "id": "8896",
+   "t": "World Is Dancing",
+   "ep": 13,
+   "sub": 13,
+   "dub": 13,
+   "upd": "2026-11-18 17:15:16",
+   "sc": 7.36,
+   "st": "Finished Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/785a39fc203fb7eeb703d513b82574f9.jpg",
+   "slug": "world-is-dancing"
+  },
+  {
+   "id": "8988",
+   "t": "Golden Curse",
+   "ep": 16,
+   "sub": 16,
+   "dub": null,
+   "upd": "2026-11-18 17:14:21",
+   "sc": null,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/72b92f0b4de37c3f3786fc3472c5fd0a.jpg",
+   "slug": "golden-curse-09004"
+  },
+  {
+   "id": "8841",
+   "t": "Tensei Shitara Ken Deshita 2nd Season",
+   "ep": 8,
+   "sub": 8,
+   "dub": 5,
+   "upd": "2026-11-18 17:12:57",
+   "sc": 7.53,
+   "st": "Currently Airing",
+   "poster": "https://cdn.anipixcdn.co/thumbnail/9aae782ce0bb85d118b47f327f502240.jpg",
+   "slug": "tensei-shitara-ken-deshita-2nd-season"
+  },
   {
    "id": "9094",
    "t": "The Prince of Tennis II U-17 World Cup: Final Member Selection Match",
@@ -13,18 +181,6 @@
    "st": "Currently Airing",
    "poster": "https://cdn.anipixcdn.co/thumbnail/627c39def67ff4d3bea42e967031741f.jpg",
    "slug": "the-prince-of-tennis-ii-u-17-world-cup-final-member-selection-match-ff25e"
-  },
-  {
-   "id": "8841",
-   "t": "Tensei Shitara Ken Deshita 2nd Season",
-   "ep": 8,
-   "sub": 8,
-   "dub": 4,
-   "upd": "2026-11-18 15:40:06",
-   "sc": 7.53,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/9aae782ce0bb85d118b47f327f502240.jpg",
-   "slug": "tensei-shitara-ken-deshita-2nd-season"
   },
   {
    "id": "9056",
@@ -207,18 +363,6 @@
    "slug": "shiotaiou-no-satou-san-ga-ore-ni-dake-amai-20763"
   },
   {
-   "id": "9052",
-   "t": "Nia Liston: The Merciless Maiden",
-   "ep": 7,
-   "sub": 7,
-   "dub": null,
-   "upd": "2026-11-17 13:05:49",
-   "sc": 7.58,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/6f97bd031372be8c00d3d9e1fde8d0c0.jpg",
-   "slug": "nia-liston-the-merciless-maiden-27e4d"
-  },
-  {
    "id": "9064",
    "t": "Mahou Shoujo Ikusei Keikaku: Restart",
    "ep": 7,
@@ -325,18 +469,6 @@
    "st": "Currently Airing",
    "poster": "https://cdn.anipixcdn.co/thumbnail/925a724e4eeabea9a8a73962dfa06dc1.jpg",
    "slug": "kanata-kara-c16d8"
-  },
-  {
-   "id": "9040",
-   "t": "Dragon Ball Super: Beerus",
-   "ep": 6,
-   "sub": 6,
-   "dub": 1,
-   "upd": "2026-11-15 15:56:05",
-   "sc": 8.31,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/980a4b7efc13f21e486a24b330c4e227.jpg",
-   "slug": "dragon-ball-super-beerus-353c1"
   },
   {
    "id": "9086",
@@ -589,138 +721,6 @@
    "st": "Currently Airing",
    "poster": "https://cdn.anipixcdn.co/thumbnail/8500cd4427ccbc38d536e34f1014924f.jpg",
    "slug": "horror-collector-b794c"
-  },
-  {
-   "id": "9039",
-   "t": "Even the Student Council Has Its Holes!",
-   "ep": 7,
-   "sub": 7,
-   "dub": 3,
-   "upd": "2026-11-14 18:14:20",
-   "sc": 7.67,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/417b9a1db323983d0fc9248db739e882.jpg",
-   "slug": "there-is-also-a-hole-in-the-student-organization-7b321"
-  },
-  {
-   "id": "9067",
-   "t": "Kashita Maryoku wa \"Revo Barai\" de Kyousei Choushuu",
-   "ep": 7,
-   "sub": 7,
-   "dub": null,
-   "upd": "2026-11-14 18:13:22",
-   "sc": 6.35,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/79ec7c24168da1eb2e7437dca0d94f2c.jpg",
-   "slug": "kashita-maryoku-wa-revo-barai-de-kyousei-choushuu-b628e"
-  },
-  {
-   "id": "9042",
-   "t": "Ranma ½ (2024) Season 3",
-   "ep": 7,
-   "sub": 7,
-   "dub": 7,
-   "upd": "2026-11-14 17:20:09",
-   "sc": 7.86,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/d64a2a16520922c28e3804df012c503e.jpg",
-   "slug": "ranma-1-2-2024-season-3-195b4"
-  },
-  {
-   "id": "9109",
-   "t": "Magical★Explorer",
-   "ep": 8,
-   "sub": 8,
-   "dub": 8,
-   "upd": "2026-11-14 16:40:37",
-   "sc": 5.8,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/8b33316019ed213719eb4f22151d08b1.jpg",
-   "slug": "magicalexplorer-23639"
-  },
-  {
-   "id": "9100",
-   "t": "Cardfight!! Vanguard: Divinez Parallactic Fate",
-   "ep": 2,
-   "sub": 2,
-   "dub": null,
-   "upd": "2026-11-14 16:38:13",
-   "sc": null,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/4c32a8cd174fe4faa594af3449d8ff5f.jpg",
-   "slug": "cardfight-vanguard-divinez-parallactic-fate-a6246"
-  },
-  {
-   "id": "8839",
-   "t": "Black Clover Season 2",
-   "ep": 7,
-   "sub": 7,
-   "dub": 5,
-   "upd": "2026-11-14 16:12:26",
-   "sc": 7.84,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/e7093313bd18aab07f36fbb18a54fdf7.jpg",
-   "slug": "black-clover-season-2"
-  },
-  {
-   "id": "9087",
-   "t": "Vertex Force",
-   "ep": 7,
-   "sub": 7,
-   "dub": null,
-   "upd": "2026-11-14 16:10:19",
-   "sc": 6.06,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/86972bfc68537795fe3503f6407bb35b.jpg",
-   "slug": "vertex-force-5dad1"
-  },
-  {
-   "id": "9082",
-   "t": "The Seven Knights of the Marronnier Kingdom",
-   "ep": 7,
-   "sub": 7,
-   "dub": 7,
-   "upd": "2026-11-14 15:15:11",
-   "sc": 6.36,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/c7d84ae0568e37cc77543ca7f8c5451d.jpg",
-   "slug": "the-seven-knights-of-the-marronnier-kingdom-f9130"
-  },
-  {
-   "id": "9069",
-   "t": "#I'm Looking For a Zombie",
-   "ep": 6,
-   "sub": 6,
-   "dub": 6,
-   "upd": "2026-11-14 15:13:10",
-   "sc": 6.63,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/7083cb21e7257ca11b805a9bf4f70be4.jpg",
-   "slug": "i-m-looking-for-a-zombie-6220a"
-  },
-  {
-   "id": "9029",
-   "t": "A Wild Last Boss Appeared! Season 2",
-   "ep": 8,
-   "sub": 8,
-   "dub": null,
-   "upd": "2026-11-14 13:41:16",
-   "sc": 7.56,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/d2c40040f2351d9c355630c2b4d44eb3.jpg",
-   "slug": "a-wild-last-boss-appeared-season-2-ed364"
-  },
-  {
-   "id": "9054",
-   "t": "A Tale of the Secret Saint",
-   "ep": 8,
-   "sub": 8,
-   "dub": null,
-   "upd": "2026-11-14 13:10:40",
-   "sc": 6.89,
-   "st": "Currently Airing",
-   "poster": "https://cdn.anipixcdn.co/thumbnail/4ed8034d28f8e8082bbc361d9cfbb474.jpg",
-   "slug": "a-tale-of-the-secret-saint-7aebe"
   }
  ]
 }
