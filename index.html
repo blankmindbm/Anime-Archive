@@ -1538,6 +1538,7 @@
   var latestExpanded = false;
   var latestLoading = false;  // a loadLatest() run is in flight
   var latestLiveTried = false; // the automatic live feed fetch already ran once this load
+  var latestLiveShown = false; // the rail is currently showing live feed data, not the snapshot
   var catalogPromise = null;  // resolves once assets/data/catalog.json has loaded
   var currentSectionPreset = null;
   var currentSectionItems = [];
@@ -2965,7 +2966,9 @@
      a rebuild is never masked by a cached copy. A successful read
      replaces the list on screen and restamps the Updated label from
      the snapshot's own fetched_at. A failed read keeps whatever is
-     already shown; it never blanks the rail. */
+     already shown; it never blanks the rail. If the live feed
+     already replaced the rail, a late snapshot read is skipped so
+     stale data never clobbers the live list. */
   function loadLatestSnapshot() {
     var ctrl = ("AbortController" in window) ? new AbortController() : null;
     var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 10000) : null;
@@ -2978,6 +2981,7 @@
         if (timer) { clearTimeout(timer); }
         var items = (data && Array.isArray(data.items)) ? data.items : [];
         if (!items.length) { return false; }
+        if (latestLiveShown) { return false; }
         items.forEach(function (it) { if (!it.p) { it.p = "anikoto"; } });
         latestItems = items;
         latestFetchedAt = (data && data.fetched_at) || null;
@@ -3033,6 +3037,7 @@
         var rows = (data && Array.isArray(data.data)) ? data.data : [];
         var items = rows.map(mapRecentRow).filter(function (it) { return !!it; });
         if (!items.length) { return false; }
+        latestLiveShown = true;
         latestItems = items;
         latestFetchedAt = new Date().toISOString();
         renderLatest();
@@ -4927,10 +4932,15 @@
     renderSearchGrid();
     renderBookmarks();
     // Latest Episodes loads on every launch from the saved snapshot
-    // file; the live feed fetch runs once the catalog has loaded
-    // (see the catalog loader below). Refresh re-runs the live
-    // fetch and falls back to re-reading the snapshot file.
+    // file, and the live feed fetch fires right away in parallel
+    // with the catalog load instead of waiting for it: the 2.1 MB
+    // catalog kept the live list waiting ~10-15 seconds. The
+    // snapshot still renders first as the fallback, and the live
+    // list replaces it as soon as it arrives (a late snapshot read
+    // never clobbers live data; see loadLatestSnapshot). Refresh
+    // re-runs the live fetch and falls back to the snapshot file.
     loadLatestSnapshot();
+    loadLatestLive(false);
     renderBannerTicker();
     $("tickerClearBtn").addEventListener("click", function () {
       clearWatchHistory();
@@ -5278,10 +5288,12 @@
       // auth is not restored yet when this runs, so this call
       // no-ops and the callback's import runs instead).
       if (malPrefs.importOnConnect) { malImportFromMal(true); }
-      // Live Latest Episodes: one feed fetch per load, through the
-      // Worker proxy. Runs after the catalog so the rail's watched
-      // bars can resolve. Quiet on failure: the snapshot stays.
-      loadLatestLive(false);
+      // The live feed fetch already fired at launch (see init), so
+      // the rail may have rendered before the catalog arrived and
+      // its watched bars used sliver-only totals. Re-paint the bars
+      // now that episode totals are known; this touches only the
+      // bars, not the rail order or scroll position.
+      refreshCardProgress();
     }).catch(function () {
       var sc = $("searchResultCount"); if (sc) { sc.textContent = "The catalog file could not be loaded."; }
       var sg = $("searchGrid"); if (sg) { sg.innerHTML = '<div class="empty"><strong>Catalog failed to load.</strong><br>Reload the page to try again.</div>'; }
