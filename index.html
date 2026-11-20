@@ -1531,11 +1531,13 @@
   var shardCache = {};        // shard number -> data
   var pilotData = null;       // key -> compact show
   var showCache = {};         // key -> compact show
+  var liveSeriesTried = {};   // key -> true once a live episode fetch was attempted this session
   var watchlist = {};         // in-memory only, key -> true
   var latestItems = [];       // latest episode updates (saved snapshot, assets/data/latest.json)
   var latestFetchedAt = null; // ISO string: when the current list was fetched
   var latestExpanded = false;
   var latestLoading = false;  // a loadLatest() run is in flight
+  var latestLiveTried = false; // the automatic live feed fetch already ran once this load
   var catalogPromise = null;  // resolves once assets/data/catalog.json has loaded
   var currentSectionPreset = null;
   var currentSectionItems = [];
@@ -1849,20 +1851,23 @@
   }
 
   /* ---------- latest episodes ---------- */
-  /* The rail is snapshot-driven: assets/data/latest.json is a dated
-     snapshot of the AniKoto API /recent-anime feed, refreshed by
-     rebuilding the app (an hourly background rebuild checks the feed
-     and republishes when it has new episodes). Live in-browser
-     updates were tried twice and abandoned: the AniKoto API sends
-     no CORS headers so a browser cannot read it at all, and the
-     AniList and Jikan live calls are blocked from the app's network
-     too (their block/error responses also lack CORS headers, so the
-     requests died silently and Refresh just reported failure).
-     Every snapshot item is an AniKoto catalog title, so each card
-     opens a real show page here. Launch and Refresh both re-read
-     the snapshot file with no-store, so a fresher snapshot from a
-     rebuild is picked up without a cached copy masking it, and the
-     Updated stamp always shows the snapshot's real fetch time. */
+  /* The rail starts from the saved snapshot in
+     assets/data/latest.json (a dated snapshot of the AniKoto API
+     /recent-anime feed), then upgrades itself to live data: once
+     the catalog has loaded, one fetch through the Cloudflare
+     Worker proxy (ANIKOTO_API + "/recent", which forwards to the
+     AniKoto API with CORS headers for this site only) rebuilds
+     the rail from the current feed. The API itself sends no CORS
+     headers, so the page cannot call it directly; the Worker is
+     the only live path. AniList and Jikan are not used here: both
+     were tried twice before and their calls are blocked from the
+     app's network. A live failure stays quiet and the snapshot
+     stays on screen (the Updated stamp then keeps showing the
+     snapshot's fetch time); there is no retry loop. Refresh
+     re-runs the live fetch and falls back to re-reading the
+     snapshot file with no-store when live fails. Every snapshot
+     item is an AniKoto catalog title, so each card opens a real
+     show page here. */
 
   function parseUpd(s) {
     if (!s) { return null; }
@@ -2365,6 +2370,11 @@
   var MAL_AUTH_URL = "https://myanimelist.net/v1/oauth2/authorize";
   var MAL_TOKEN_URL = "https://anime-archive-mal.blankmindbm.workers.dev/token";
   var MAL_API = "https://anime-archive-mal.blankmindbm.workers.dev/api";
+  /* Live AniKoto data goes through the same Cloudflare Worker
+     (see worker.js): the AniKoto API sends no CORS headers, so
+     the page cannot call it directly. Same origin rule as MAL:
+     the Worker only answers the site's origin. */
+  var ANIKOTO_API = "https://anime-archive-mal.blankmindbm.workers.dev/anikoto";
   var MAL_STORE_KEY = "anime-archive:mal:v1";
   var MAL_PKCE_KEY = "anime-archive:mal:pkce:v1";
   var MAL_PREFS_KEY = "anime-archive:mal:prefs:v1";
@@ -2977,12 +2987,64 @@
       .catch(function () { if (timer) { clearTimeout(timer); } return false; });
   }
 
-  /* Launch and Refresh both land here: re-read the snapshot file
-     and repaint. There is no live cross-origin call anymore (see
-     the section comment above), so Refresh can only fail if the
-     app's own snapshot file cannot be read; in that case the list
-     already on screen stays, with a plain note, and the button is
-     always handed back. */
+  /* Live feed load: one fetch of the AniKoto recent feed through
+     the Worker proxy, mapping each API row to the same item shape
+     the snapshot uses (id, title, latest sub episode, sub/dub
+     counts, updated time, score, status, poster, slug). The API
+     row's is_sub is the latest sub episode number, matching what
+     the snapshot builder recorded. Rows with no sub episode yet
+     (not yet aired) are skipped, as the snapshot does. On success
+     the list is replaced and the Updated label restamps from the
+     live fetch time. On any failure (network, timeout, bad data)
+     it returns false and the caller falls back to the snapshot;
+     nothing is shown and nothing is retried. `force` is for the
+     Refresh button, which must re-run the live fetch on demand;
+     the automatic once-per-load call passes false and runs at
+     most once per page load. */
+  function mapRecentRow(row) {
+    if (!row || row.id == null || !row.title) { return null; }
+    var sub = Number(row.is_sub), dub = Number(row.is_dub);
+    if (!isFinite(sub) || sub < 1) { return null; }
+    var sc = (row.score == null || row.score === "") ? null : Number(row.score);
+    return {
+      id: String(row.id), p: "anikoto", t: String(row.title),
+      ep: Math.floor(sub), sub: Math.floor(sub),
+      dub: isFinite(dub) ? Math.floor(dub) : 0,
+      upd: row.updated_at ? String(row.updated_at) : null,
+      sc: (sc != null && isFinite(sc)) ? sc : null,
+      st: row.status ? String(row.status) : "",
+      poster: row.poster ? String(row.poster) : "",
+      slug: row.slug ? String(row.slug) : ""
+    };
+  }
+
+  function loadLatestLive(force) {
+    if (!force && latestLiveTried) { return Promise.resolve(false); }
+    latestLiveTried = true;
+    var ctrl = ("AbortController" in window) ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 10000) : null;
+    return fetch(ANIKOTO_API + "/recent?page=1&per_page=60", { signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        if (!r.ok) { throw new Error("anikoto recent " + r.status); }
+        return r.json();
+      })
+      .then(function (data) {
+        if (timer) { clearTimeout(timer); }
+        var rows = (data && Array.isArray(data.data)) ? data.data : [];
+        var items = rows.map(mapRecentRow).filter(function (it) { return !!it; });
+        if (!items.length) { return false; }
+        latestItems = items;
+        latestFetchedAt = new Date().toISOString();
+        renderLatest();
+        return true;
+      })
+      .catch(function () { if (timer) { clearTimeout(timer); } return false; });
+  }
+
+  /* Refresh (and the Refresh button) land here: try the live feed
+     first, then fall back to re-reading the snapshot file. Either
+     way the list already on screen stays if both fail, with a
+     plain note, and the button is always handed back. */
   function loadLatest() {
     var btn = $("latestRefreshBtn");
     if (latestLoading) { return Promise.resolve(); }
@@ -2995,7 +3057,8 @@
       btn.classList.remove("spinning");
       btn.disabled = false;
     }
-    return loadLatestSnapshot()
+    return loadLatestLive(true)
+      .then(function (ok) { return ok ? true : loadLatestSnapshot(); })
       .then(function (ok) {
         if (!ok) {
           if (latestItems.length) {
@@ -3183,7 +3246,42 @@
 
   /* ---------- data loading ---------- */
 
-  function loadShowData(entry) {
+  /* Live episode list: one fetch of a show's episodes through the
+     Worker proxy, mapping each API episode to the same compact
+     shape the shards use: [number, title, sub embed URL, dub
+     embed URL, null]. Only attempted once per show per session
+     (liveSeriesTried); a failed or empty result returns null and
+     the caller falls back to the bundled shard data. Only used
+     when opening a show page, never for the banner ticker, which
+     keeps reading shards. */
+  function loadSeriesLive(entry) {
+    var key = keyOf(entry.p, entry.id);
+    if (liveSeriesTried[key]) { return Promise.resolve(null); }
+    liveSeriesTried[key] = true;
+    var ctrl = ("AbortController" in window) ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 10000) : null;
+    return fetch(ANIKOTO_API + "/series/" + encodeURIComponent(entry.id), { signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        if (!r.ok) { throw new Error("anikoto series " + r.status); }
+        return r.json();
+      })
+      .then(function (data) {
+        if (timer) { clearTimeout(timer); }
+        var eps = (data && data.data && Array.isArray(data.data.episodes)) ? data.data.episodes : [];
+        var mapped = eps.map(function (e) {
+          var num = Number(e.number);
+          if (!isFinite(num) || num < 1) { return null; }
+          var eu = e.embed_url || {};
+          return [Math.floor(num), e.title ? String(e.title) : ("Episode " + Math.floor(num)), eu.sub || null, eu.dub || null, null];
+        }).filter(function (x) { return !!x; });
+        mapped.sort(function (a, b) { return a[0] - b[0]; });
+        if (!mapped.length) { return null; }
+        return { ss: "ready", eps: mapped };
+      })
+      .catch(function () { if (timer) { clearTimeout(timer); } return null; });
+  }
+
+  function loadShowData(entry, useLive) {
     var key = keyOf(entry.p, entry.id);
     if (showCache[key]) { return Promise.resolve(showCache[key]); }
     function fromPilot() {
@@ -3206,7 +3304,14 @@
         });
       }).catch(function () { return null; });
     }
-    var chain = entry.p === "anikoto" ? fromShard() : fromPilot();
+    var chain;
+    if (useLive && entry.p === "anikoto") {
+      chain = loadSeriesLive(entry).then(function (live) {
+        return live || fromShard();
+      });
+    } else {
+      chain = entry.p === "anikoto" ? fromShard() : fromPilot();
+    }
     return chain.then(function (show) {
       if (!show && entry.p === "anikoto") { return fromPilot(); }
       return show;
@@ -4362,7 +4467,7 @@
     $("epLegend").textContent = "";
     $("epHeading").textContent = "Episodes";
     window.scrollTo({ top: 0, behavior: "smooth" });
-    loadShowData(entry).then(function (show) {
+    loadShowData(entry, true).then(function (show) {
       if (state.currentKey !== key && $("showDetail").classList.contains("hidden")) { return; }
       renderDetail(entry, show || { eps: [] });
     });
@@ -4822,8 +4927,10 @@
     renderSearchGrid();
     renderBookmarks();
     // Latest Episodes loads on every launch from the saved snapshot
-    // file (see loadLatest); Refresh re-reads the same file.
-    loadLatest();
+    // file; the live feed fetch runs once the catalog has loaded
+    // (see the catalog loader below). Refresh re-runs the live
+    // fetch and falls back to re-reading the snapshot file.
+    loadLatestSnapshot();
     renderBannerTicker();
     $("tickerClearBtn").addEventListener("click", function () {
       clearWatchHistory();
@@ -5171,6 +5278,10 @@
       // auth is not restored yet when this runs, so this call
       // no-ops and the callback's import runs instead).
       if (malPrefs.importOnConnect) { malImportFromMal(true); }
+      // Live Latest Episodes: one feed fetch per load, through the
+      // Worker proxy. Runs after the catalog so the rail's watched
+      // bars can resolve. Quiet on failure: the snapshot stays.
+      loadLatestLive(false);
     }).catch(function () {
       var sc = $("searchResultCount"); if (sc) { sc.textContent = "The catalog file could not be loaded."; }
       var sg = $("searchGrid"); if (sg) { sg.innerHTML = '<div class="empty"><strong>Catalog failed to load.</strong><br>Reload the page to try again.</div>'; }
